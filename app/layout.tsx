@@ -4,10 +4,10 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import GoogleTranslator from '@/components/GoogleTranslator'
 import { Toaster } from 'react-hot-toast'
-import { ensureDatabaseReady } from '@/lib/db-init'
+import { initializeDatabase } from '@/lib/init-db-auto'
 
 // Initialize database on server startup
-ensureDatabaseReady().catch(err => console.error('[Layout] DB init error:', err))
+initializeDatabase().catch(err => console.error('[Layout] DB init error:', err))
 
 export const metadata: Metadata = {
   title: {
