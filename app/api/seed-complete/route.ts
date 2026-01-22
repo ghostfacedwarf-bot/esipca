@@ -54,6 +54,37 @@ const HEIGHT_MULTIPLIERS: Record<string, number> = {
   '2.6 m': 2.6, '2.7 m': 2.7, '2.8 m': 2.8, '2.9 m': 2.9, '3.0 m': 3.0,
 }
 
+// Product images mapping (slug -> image filename)
+const PRODUCT_IMAGES: Record<string, string> = {
+  'sipca-metalica-p1-7024-mat': 'Sipca Metalica P1 7024 MAT.jpg',
+  'sipca-metalica-p2-zincat': 'Sipca Metalica P2 Zincat.jpg',
+  'sipca-metalica-p3-8017-mat': 'Sipca Metalica P3 8017 MAT.jpg',
+  'sipca-metalica-p4-stejar': 'Sipca Metalica P4 Stejar.jpg',
+  'sipca-metalica-p5-8019-mat': 'Sipca Metalica P5 8019 MAT.jpg',
+  'sipca-metalica-p6-3011-lucios': 'Sipca Metalica P6 3011 LUCIOS.jpg',
+  'sipca-metalica-p7-8017-lucios': 'Sipca Metalica P7 8017 LUCIOS.jpg',
+  'sipca-metalica-p8-8004-mat': 'Sipca Metalica P8 8004 MAT.jpg',
+  'sipca-metalica-p9-9005-mat': 'Sipca Metalica P9 9005 MAT.jpg',
+  'sipca-metalica-p10-7024-mat': 'Sipca Metalica P10 7024 MAT.jpg',
+  'sipca-metalica-p11-5010-lucios': 'Sipca Metalica P11 5010 LUCIOS.jpg',
+  'sipca-metalica-p12-8017-mat': 'Sipca Metalica P12 8017 MAT.jpg',
+  'sipca-metalica-p13-stejar': 'Sipca Metalica P13 Stejar.jpg',
+  'sipca-metalica-p14-8019-mat': 'Sipca Metalica P14 8019 MAT.jpg',
+  'sipca-metalica-p15-3011-lucios': 'Sipca Metalica P15 3011 LUCIOS.jpg',
+  'sipca-metalica-p16-8017-lucios': 'Sipca Metalica P16 8017 LUCIOS.jpg',
+  'sipca-metalica-p17-8004-mat': 'Sipca Metalica P17 8004 MAT.jpg',
+  'sipca-metalica-p18-9005-mat': 'Sipca Metalica P18 9005 MAT.jpg',
+  'sipca-metalica-p19-7024-mat': 'Sipca Metalica P19 7024 MAT.jpg',
+  'sipca-metalica-p20-zincat': 'Sipca Metalica P20 Zincat.jpg',
+  'sipca-metalica-p21-8017-mat': 'Sipca Metalica P21 8017 MAT.jpg',
+  'sipca-metalica-p22-stejar': 'Sipca Metalica P22 Stejar.jpg',
+  'sipca-metalica-p23-8019-mat': 'Sipca Metalica P23 8019 MAT.jpg',
+  'sipca-metalica-p24-3011-lucios': 'Sipca Metalica P24 3011 LUCIOS.jpg',
+  'sipca-metalica-p25-8017-lucios': 'Sipca Metalica P25 8017 LUCIOS.jpg',
+  'sipca-metalica-p26-8004-mat': 'Sipca Metalica P26 8004 MAT.jpg',
+  'sipca-metalica-p27-9005-mat': 'Sipca Metalica P27 9005 MAT.jpg',
+}
+
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token')
 
@@ -95,12 +126,15 @@ export async function GET(request: NextRequest) {
     let productsAdded = 0
     let variantsAdded = 0
     let reviewsAdded = 0
+    let mediaAdded = 0
     const productIds: string[] = []
+    const productSlugToId: Record<string, string> = {}
 
     // Step 3: Add all products with complete data
     for (const p of ALL_PRODUCTS) {
       const productId = uuid()
       productIds.push(productId)
+      productSlugToId[p.slug] = productId
 
       const shortDesc = `${p.profile} - Culoare ${p.color} - Finisaj ${p.finish}`
       const longDesc = sipcaDescription.replace('Culoare RAL', `Culoare: ${p.color} - Finisaj: ${p.finish}`)
@@ -139,7 +173,21 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Step 5: Add reviews (to first and 9th product like in seed-final.ts)
+    // Step 5: Add media for each product
+    for (const [slug, filename] of Object.entries(PRODUCT_IMAGES)) {
+      const productId = productSlugToId[slug]
+      if (productId) {
+        const mediaId = uuid()
+        const product = ALL_PRODUCTS.find(p => p.slug === slug)
+        await connection.execute(
+          `INSERT INTO Media (id, productId, url, alt, sortOrder) VALUES (?, ?, ?, ?, ?)`,
+          [mediaId, productId, `/images/products/${filename}`, product?.name || slug, 0]
+        )
+        mediaAdded++
+      }
+    }
+
+    // Step 6: Add reviews (to first and 9th product like in seed-final.ts)
     if (productIds.length > 0) {
       const reviewId1 = uuid()
       await connection.execute(
@@ -168,6 +216,7 @@ export async function GET(request: NextRequest) {
       summary: {
         products: productsAdded,
         variants: variantsAdded,
+        media: mediaAdded,
         reviews: reviewsAdded,
         variantsPerProduct: HEIGHTS.length,
         heights: HEIGHTS,
