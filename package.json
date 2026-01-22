@@ -1,6 +1,6 @@
 {
   "name": "esipcametalica",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Esipcametalica - Metal Products E-commerce Platform",
   "scripts": {
     "dev": "next dev",
