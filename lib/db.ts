@@ -4,7 +4,6 @@
  */
 
 import mysql from 'mysql2/promise'
-import { Pool } from 'pg'
 
 // Detect database type from URL
 function getDatabaseType(): 'postgresql' | 'mysql' {
@@ -15,11 +14,13 @@ function getDatabaseType(): 'postgresql' | 'mysql' {
   return 'mysql'
 }
 
-// PostgreSQL pool (reused across requests)
-let pgPool: Pool | null = null
+// PostgreSQL pool (reused across requests) - lazy loaded
+let pgPool: any = null
 
-function getPgPool(): Pool {
+async function getPgPool() {
   if (!pgPool) {
+    // Dynamic import to avoid loading pg on MySQL environments
+    const { Pool } = await import('pg')
     pgPool = new Pool({
       connectionString: process.env.DATABASE_URL,
     })
@@ -37,7 +38,7 @@ export async function getProductBySlug(slug: string) {
 
   try {
     if (dbType === 'postgresql') {
-      const pool = getPgPool()
+      const pool = await getPgPool()
 
       // Get product
       const productResult = await pool.query(
@@ -146,7 +147,7 @@ export async function getAllProducts() {
 
   try {
     if (dbType === 'postgresql') {
-      const pool = getPgPool()
+      const pool = await getPgPool()
 
       const result = await pool.query(
         `SELECT p.*, c.name as "categoryName",
@@ -211,7 +212,7 @@ export async function getCategories() {
 
   try {
     if (dbType === 'postgresql') {
-      const pool = getPgPool()
+      const pool = await getPgPool()
 
       const result = await pool.query(
         `SELECT * FROM "Category" WHERE "isActive" = true ORDER BY "sortOrder" ASC`
