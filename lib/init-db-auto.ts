@@ -167,13 +167,20 @@ export async function initializeDatabase() {
   initStarted = true
 
   try {
-    console.log('[AUTO-INIT] Starting automatic database initialization...')
-
     const dbUrl = process.env.DATABASE_URL
     if (!dbUrl) {
       console.log('[AUTO-INIT] DATABASE_URL not set, skipping initialization')
       return
     }
+
+    // Skip auto-init for PostgreSQL (local dev uses Prisma migrations)
+    if (dbUrl.startsWith('postgresql://') || dbUrl.startsWith('postgres://')) {
+      console.log('[AUTO-INIT] PostgreSQL detected, skipping (use Prisma for local)')
+      initCompleted = true
+      return
+    }
+
+    console.log('[AUTO-INIT] Starting automatic database initialization...')
 
     const connection = await mysql.createConnection(dbUrl)
 

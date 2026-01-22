@@ -30,6 +30,7 @@
     "next-auth": "^4.24.0",
     "next-image-export-optimizer": "^1.19.0",
     "nodemailer": "^6.9.0",
+    "pg": "^8.17.2",
     "postcss": "^8.4.0",
     "prisma": "^5.7.0",
     "react": "^18.3.0",
