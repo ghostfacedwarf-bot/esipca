@@ -46,11 +46,12 @@ async function getProducts(categoryId?: string, page: number = 1, sort: string =
 export default async function ProdusePage({
   searchParams,
 }: {
-  searchParams: { cat?: string; page?: string; sort?: string }
+  searchParams: Promise<{ cat?: string; page?: string; sort?: string }>
 }) {
+  const params = await searchParams
   const categories = await getCategories()
-  const currentPage = parseInt(searchParams.page || '1', 10)
-  const { products, totalCount, totalPages } = await getProducts(searchParams.cat, currentPage, searchParams.sort)
+  const currentPage = parseInt(params.page || '1', 10)
+  const { products, totalCount, totalPages } = await getProducts(params.cat, currentPage, params.sort)
 
   return (
     <main>
@@ -86,7 +87,7 @@ export default async function ProdusePage({
                         <Link
                           href={`/produse?cat=${category.id}`}
                           className={`block py-2 px-3 rounded-lg transition-colors ${
-                            searchParams.cat === category.id
+                            params.cat === category.id
                               ? 'bg-primary-50 text-primary-600 font-semibold'
                               : 'text-dark-600 hover:bg-dark-50'
                           }`}
@@ -191,7 +192,7 @@ export default async function ProdusePage({
                   <div className="flex justify-center items-center gap-2 mt-12 pt-8 border-t border-dark-100">
                     {currentPage > 1 && (
                       <Link
-                        href={`/produse${searchParams.cat ? `?cat=${searchParams.cat}&page=${currentPage - 1}` : `?page=${currentPage - 1}`}`}
+                        href={`/produse${params.cat ? `?cat=${params.cat}&page=${currentPage - 1}` : `?page=${currentPage - 1}`}`}
                         className="px-4 py-2 border border-dark-200 rounded-lg text-dark-700 hover:bg-dark-50 transition-colors font-semibold"
                       >
                         ← Pagina anterioară
@@ -202,7 +203,7 @@ export default async function ProdusePage({
                       {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
                         <Link
                           key={pageNum}
-                          href={`/produse${searchParams.cat ? `?cat=${searchParams.cat}&page=${pageNum}` : `?page=${pageNum}`}`}
+                          href={`/produse${params.cat ? `?cat=${params.cat}&page=${pageNum}` : `?page=${pageNum}`}`}
                           className={`px-3 py-2 rounded-lg font-semibold transition-colors ${
                             pageNum === currentPage
                               ? 'bg-primary-600 text-white'
@@ -216,7 +217,7 @@ export default async function ProdusePage({
 
                     {currentPage < totalPages && (
                       <Link
-                        href={`/produse${searchParams.cat ? `?cat=${searchParams.cat}&page=${currentPage + 1}` : `?page=${currentPage + 1}`}`}
+                        href={`/produse${params.cat ? `?cat=${params.cat}&page=${currentPage + 1}` : `?page=${currentPage + 1}`}`}
                         className="px-4 py-2 border border-dark-200 rounded-lg text-dark-700 hover:bg-dark-50 transition-colors font-semibold"
                       >
                         Pagina următoare →
