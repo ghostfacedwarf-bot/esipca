@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev)",
+      "Bash(npm run db:seed:*)",
+      "Bash(npm run db:add-media:*)",
+      "WebSearch",
+      "WebFetch(domain:www.esipcametalica.ro)",
+      "Bash(dir \"C:\\\\Users\\\\MARIA\\\\esipcametalica-next\\\\app\")",
+      "Bash(findstr:*)",
+      "Bash(test:*)",
+      "Bash(npx prisma db execute:*)",
+      "Bash(npm install:*)",
+      "Bash(npm update:*)",
+      "Bash(npm view:*)",
+      "Bash(node -c:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout 15 npm run start:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(node create-archive.js:*)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)",
+      "Bash(git config:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}

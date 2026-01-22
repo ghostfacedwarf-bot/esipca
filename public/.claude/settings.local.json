@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(npm run dev:*)",
+      "WebFetch(domain:hire4europe.com)",
+      "Bash(lsof:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(kill:*)",
+      "Bash(curl:*)",
+      "Bash(xargs:*)",
+      "Bash(cmd.exe /c \"taskkill /PID 29836 /F\")",
+      "Bash(cmd.exe /c \"wmic process where ProcessId=29836 get Name,ProcessId,CommandLine\")",
+      "Bash(powershell -Command \"Stop-Process -Id 29836 -Force\")",
+      "Bash(npm run build:*)",
+      "WebSearch",
+      "WebFetch(domain:www.hostinger.com)",
+      "Bash(powershell -Command:*)",
+      "Bash(tar:*)",
+      "Bash(ls:*)",
+      "Bash(npm install:*)",
+      "Bash(node create-zip.js:*)",
+      "Bash(node create-full-zip.js:*)",
+      "Bash(node create-clean-zip.js:*)"
+    ]
+  }
+}

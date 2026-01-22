@@ -1,0 +1,418 @@
+'use client'
+
+import { useState } from 'react'
+import { ShoppingCart, Share2, AlertCircle } from 'lucide-react'
+import { useCart, CartItem } from '@/lib/store'
+import { toast } from 'react-hot-toast'
+
+interface Variant {
+  id: string
+  sku: string
+  attributes: Record<string, any>
+  price: number
+  stockStatus: string
+  stockQty: number
+}
+
+interface ProductOrderFormProps {
+  productId: string
+  productName: string
+  variants: Variant[]
+  priceType: string
+  priceFrom: number
+  categoryName?: string
+  specs?: Record<string, any>
+}
+
+export default function ProductOrderForm({
+  productId,
+  productName,
+  variants,
+  priceType,
+  priceFrom,
+  categoryName = '',
+  specs = {},
+}: ProductOrderFormProps) {
+  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(
+    variants.length > 0 ? variants[0] : null
+  )
+  const [selectedHeight, setSelectedHeight] = useState('') // Separate state for height
+  const [quantity, setQuantity] = useState(1)
+  const [length, setLength] = useState('1.0') // Lungime în metri (1.0m default)
+  const [isLoading, setIsLoading] = useState(false)
+  const { addItem } = useCart()
+
+  // Extract bucăți per metru from specs
+  const bucinPerMetru = parseInt(String(specs?.bucinPerMetru || 10), 10)
+
+  // Calculate pieces needed based on length
+  const lengthNum = parseFloat(length)
+  const piecesNeeded = Math.ceil(lengthNum * bucinPerMetru * quantity)
+
+  // Calculate total price: price per piece × pieces needed
+  const totalPrice = (selectedVariant?.price || priceFrom) * piecesNeeded
+
+  // Group variants by attributes for better UX
+  const getUniqueAttributeValues = (attributeKey: string) => {
+    return Array.from(
+      new Set(
+        variants
+          .map((v) => v.attributes[attributeKey])
+          .filter((v) => v !== undefined)
+      )
+    )
+  }
+
+  const getAttributeKeys = () => {
+    if (variants.length === 0) return []
+    return Object.keys(variants[0].attributes)
+  }
+
+  const handleAddToCart = async () => {
+    if (!selectedVariant) {
+      toast.error('Selectează o variantă')
+      return
+    }
+
+    if (!selectedHeight) {
+      toast.error('Selectează o înălțime')
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const cartItem: CartItem = {
+        id: `${productId}-${selectedVariant.id}-${selectedHeight}`,
+        productId,
+        variantId: selectedVariant.id,
+        productName,
+        sku: selectedVariant.sku,
+        attributes: { ...selectedVariant.attributes, inaltime: selectedHeight },
+        price: selectedVariant.price,
+        quantity,
+        priceType,
+      }
+
+      addItem(cartItem)
+      toast.success(`${productName} (${selectedHeight}m) adăugat în coș!`)
+
+      // Reset form
+      setQuantity(1)
+      setSelectedHeight('')
+    } catch (error) {
+      toast.error('Eroare la adăugare în coș')
+      console.error(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleRequestQuote = async () => {
+    if (!selectedVariant) {
+      toast.error('Selectează o variantă')
+      return
+    }
+
+    if (!selectedHeight) {
+      toast.error('Selectează o înălțime')
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId,
+          productName,
+          variantId: selectedVariant.id,
+          sku: selectedVariant.sku,
+          quantity,
+          price: selectedVariant.price,
+          height: selectedHeight,
+          attributes: selectedVariant.attributes,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to send quote request')
+      }
+
+      toast.success('Cerere de ofertă trimisă!')
+      setQuantity(1)
+      setSelectedHeight('')
+    } catch (error: any) {
+      toast.error(error.message || 'Eroare la trimitere cererii')
+      console.error(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const isOutOfStock = selectedVariant?.stockStatus === 'out_of_stock'
+  const attributeKeys = getAttributeKeys()
+
+  return (
+    <div className="space-y-3">
+      {/* Variant Selector */}
+      {attributeKeys.length > 0 && (
+        <div className="p-4 bg-white border border-dark-100 rounded-lg space-y-3">
+          <h3 className="text-base font-bold text-dark-900">Selectează Varianta</h3>
+
+          {attributeKeys.map((key) => {
+            const isSipcaCategory = categoryName.toLowerCase().includes('șipcă')
+            const isHeightAttribute = (key.toLowerCase() === 'inaltime' || key.toLowerCase() === 'height') && isSipcaCategory
+            const uniqueValues = getUniqueAttributeValues(key)
+
+            return (
+              <div key={key}>
+                <label className="block text-sm font-semibold text-dark-800 mb-3 capitalize">
+                  {key === 'inaltime' ? 'Înălțime' : key}
+                </label>
+
+                {isHeightAttribute ? (
+                  // Dropdown for height attribute - ONLY for Șipcă Metalică
+                  <select
+                    value={selectedHeight}
+                    onChange={(e) => {
+                      const selectedValue = e.target.value
+                      setSelectedHeight(selectedValue)
+
+                      // Try to match with existing variant if available
+                      const matchingVariant = variants.find(
+                        (v) => String(v.attributes[key]) === selectedValue
+                      )
+
+                      // If found, use it. Otherwise use the first variant (default)
+                      if (matchingVariant) {
+                        setSelectedVariant(matchingVariant)
+                      } else if (variants.length > 0) {
+                        // Use first variant as fallback
+                        setSelectedVariant(variants[0])
+                      }
+                    }}
+                    className="w-full px-4 py-3 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-semibold text-dark-900"
+                  >
+                    <option value="">Selectează o înălțime...</option>
+                    {Array.from({ length: 25 }, (_, i) => {
+                      const height = (0.6 + i * 0.1).toFixed(1)
+                      return (
+                        <option key={height} value={height}>
+                          {height} m
+                        </option>
+                      )
+                    })}
+                  </select>
+                ) : (
+                  // Buttons for other attributes
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {uniqueValues.map((value) => {
+                      // When filtering by other attributes (color, etc.), keep the selected height in mind
+                      const matchingVariant = variants.find((v) => {
+                        const matches = v.attributes[key] === value
+                        // If height is selected, also check it matches
+                        if (selectedHeight && attributeKeys.includes('inaltime')) {
+                          return matches && String(v.attributes['inaltime']) === selectedHeight
+                        }
+                        return matches
+                      })
+                      const isSelected = selectedVariant?.attributes[key] === value
+
+                      return (
+                        <button
+                          key={String(value)}
+                          onClick={() => {
+                            if (matchingVariant) {
+                              setSelectedVariant(matchingVariant)
+                            }
+                          }}
+                          className={`p-3 rounded-lg font-semibold transition-all border-2 ${
+                            isSelected
+                              ? 'border-primary-600 bg-primary-50 text-primary-700'
+                              : 'border-dark-200 bg-white text-dark-700 hover:border-dark-300'
+                          }`}
+                          disabled={!matchingVariant}
+                        >
+                          {String(value)}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Length Input */}
+      <div className="p-4 bg-white border border-dark-100 rounded-lg">
+        <label className="block text-sm font-semibold text-dark-800 mb-2">
+          Lungime (m)
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            value={length}
+            onChange={(e) => setLength(e.target.value)}
+            placeholder="Ex: 87.5"
+            step="0.1"
+            min="0.1"
+            className="flex-1 px-4 py-2 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-semibold text-dark-900 text-sm"
+          />
+          <span className="text-dark-600 font-semibold text-sm">m</span>
+        </div>
+        <p className="text-xs text-dark-500 mt-1">
+          Introdu orice valoare (ex: 1.5, 2.75, 87.5)
+        </p>
+      </div>
+
+      {/* Variant Details & Pricing */}
+      {selectedVariant && (
+        <div className="p-3 bg-primary-50 rounded-lg border border-primary-200">
+          <div className="grid md:grid-cols-2 gap-2 text-sm">
+            {selectedHeight && (
+              <div>
+                <p className="text-dark-600 text-xs mb-1">Înălțime selectată</p>
+                <p className="font-bold text-primary-700 text-sm">
+                  {selectedHeight} m
+                </p>
+              </div>
+            )}
+            <div>
+              <p className="text-dark-600 text-xs mb-1">Cod produs</p>
+              <p className="font-mono font-semibold text-dark-900 text-xs">
+                {selectedVariant.sku}
+              </p>
+            </div>
+            <div>
+              <p className="text-dark-600 text-xs mb-1">Stoc</p>
+              <p className={`font-semibold text-sm ${
+                selectedVariant.stockStatus === 'in_stock'
+                  ? 'text-green-600'
+                  : 'text-red-600'
+              }`}>
+                {selectedVariant.stockStatus === 'in_stock'
+                  ? `${selectedVariant.stockQty} buc.`
+                  : 'Indisponibil'}
+              </p>
+            </div>
+            <div>
+              <p className="text-dark-600 text-xs mb-1">Preț/buc</p>
+              <p className="font-bold text-primary-600">
+                {selectedVariant.price} RON
+              </p>
+            </div>
+            <div>
+              <p className="text-dark-600 text-xs mb-1">Buc. necesare</p>
+              <p className="font-bold text-dark-900">
+                {piecesNeeded} buc.
+              </p>
+              <p className="text-xs text-dark-500 mt-0.5">
+                ({lengthNum}m × {quantity} × {bucinPerMetru})
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quantity Selector */}
+      <div className="p-4 bg-white border border-dark-100 rounded-lg">
+        <label className="block text-sm font-semibold text-dark-800 mb-2">
+          Cantitate (unități)
+        </label>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            className="p-2 border border-dark-200 rounded-lg hover:bg-dark-100 transition"
+            disabled={quantity <= 1}
+          >
+            −
+          </button>
+          <input
+            type="number"
+            value={quantity}
+            onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+            className="w-20 px-3 py-2 border border-dark-200 rounded-lg text-center font-semibold"
+            min="1"
+          />
+          <button
+            onClick={() => setQuantity(quantity + 1)}
+            className="p-2 border border-dark-200 rounded-lg hover:bg-dark-100 transition"
+          >
+            +
+          </button>
+        </div>
+      </div>
+
+      {/* Total Price Summary */}
+      <div className="p-4 bg-gradient-to-br from-primary-50 to-primary-100 border border-primary-200 rounded-lg">
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between items-center">
+            <span className="text-dark-700">Preț/buc:</span>
+            <span className="font-semibold text-dark-900">{selectedVariant?.price || priceFrom} RON</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-dark-700">Buc. necesare:</span>
+            <span className="font-semibold text-dark-900">{piecesNeeded} buc.</span>
+          </div>
+          <div className="border-t border-primary-300 pt-2">
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-dark-900">TOTAL:</span>
+              <span className="text-2xl font-bold text-primary-600">{totalPrice.toFixed(2)} RON</span>
+            </div>
+            <p className="text-xs text-dark-500 mt-1">
+              ({lengthNum}m × {quantity} × {bucinPerMetru} = {piecesNeeded} buc)
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Stock Warning */}
+      {isOutOfStock && (
+        <div className="flex gap-3 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold">Produs indisponibil</p>
+            <p className="text-sm">Contactează-ne pentru a afla când va fi disponibil</p>
+          </div>
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      <div className="space-y-2">
+        <button
+          onClick={handleAddToCart}
+          disabled={isOutOfStock || isLoading}
+          className="w-full btn btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed py-3 text-sm"
+        >
+          <ShoppingCart size={18} />
+          {isLoading ? 'Se adaugă...' : 'Adaugă în Coș'}
+        </button>
+        <button
+          onClick={handleRequestQuote}
+          disabled={isLoading}
+          className="w-full btn btn-outline flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed py-2 text-sm"
+        >
+          📋 Solicită Ofertă
+        </button>
+        <button className="w-full btn btn-ghost flex items-center justify-center gap-2 py-2 text-sm">
+          <Share2 size={16} />
+          Partajează
+        </button>
+      </div>
+
+      {/* Info */}
+      <div className="p-3 bg-dark-50 rounded-lg text-xs text-dark-700">
+        <p>
+          Nu ești sigur ce variantă alegi?
+          <a href="/contact" className="text-primary-600 font-semibold hover:text-primary-700">
+            {' '}Contactează-ne
+          </a>
+        </p>
+      </div>
+    </div>
+  )
+}

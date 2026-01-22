@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm dev)",
+      "Bash(psql:*)",
+      "Bash(where:*)",
+      "Bash(net stop:*)",
+      "Bash(\"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\pg_ctl.exe\" -D \"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\data\" reload)",
+      "Bash(\"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -U postgres -h localhost -w -c \"ALTER USER postgres PASSWORD ''postgres123'';\")",
+      "Bash(\"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -U postgres -h localhost -c \"CREATE DATABASE esipcametalica;\")",
+      "Bash(pnpm exec prisma migrate:*)",
+      "Bash(set:*)",
+      "Bash(pnpm generate:*)",
+      "Bash(export PGPASSWORD=\"Mario090912\")",
+      "Bash(\"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -U postgres -h localhost -d postgres -c \"CREATE DATABASE esipcametalica;\")",
+      "Bash(\"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -U postgres -c \"CREATE DATABASE esipcametalica;\")",
+      "Bash(node -e:*)",
+      "Bash(pnpm db:push:*)",
+      "WebFetch(domain:esipcametalica.ro)",
+      "Bash(pnpm db:seed:*)",
+      "Bash(\"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -U postgres -d esipcametalica -c \"SELECT COUNT\\(*\\) as total_products FROM product;\")",
+      "Bash(node prisma/seed-complete.ts:*)",
+      "Bash(node prisma/seed-final.ts:*)",
+      "Bash(npm run db:seed:*)",
+      "Bash(npx prisma:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "WebSearch",
+      "WebFetch(domain:unsplash.com)",
+      "Bash(magick:*)"
+    ]
+  }
+}

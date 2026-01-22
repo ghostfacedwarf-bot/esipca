@@ -1,0 +1,272 @@
+import Link from 'next/link'
+import { ArrowRight, Filter } from 'lucide-react'
+import { Suspense } from 'react'
+import { prisma } from '@/lib/prisma'
+import SortDropdown from './SortDropdown'
+
+// Mark as dynamic - fetch products at runtime, not build time
+export const dynamic = 'force-dynamic'
+
+export const metadata = {
+  title: 'Produse | Esipca Metalica',
+  description: 'Catalog complet de șipcă metalică, tablă zincată și jgheaburi. Preturi competitive și livrare rapidă.',
+}
+
+async function getCategories() {
+  const categories = await prisma.category.findMany({
+    where: { isActive: true },
+    orderBy: { sortOrder: 'asc' },
+  })
+  return categories
+}
+
+async function getProducts(categoryId?: string, page: number = 1, sort: string = 'default') {
+  const where: any = { isActive: true }
+  if (categoryId) {
+    where.categoryId = categoryId
+  }
+
+  const itemsPerPage = 9
+  const skip = (page - 1) * itemsPerPage
+
+  // Build orderBy based on sort parameter
+  let orderBy: any = { createdAt: 'desc' }
+  if (sort === 'price-asc') {
+    orderBy = { priceFrom: 'asc' }
+  } else if (sort === 'price-desc') {
+    orderBy = { priceFrom: 'desc' }
+  } else if (sort === 'newest') {
+    orderBy = { createdAt: 'desc' }
+  } else if (sort === 'bestseller') {
+    orderBy = { isBestseller: 'desc' }
+  }
+
+  const [products, totalCount] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      include: {
+        category: true,
+        media: { take: 1, orderBy: { sortOrder: 'asc' } },
+        variants: { take: 1 },
+      },
+      orderBy,
+      skip,
+      take: itemsPerPage,
+    }),
+    prisma.product.count({ where }),
+  ])
+
+  const totalPages = Math.ceil(totalCount / itemsPerPage)
+
+  return { products, totalCount, totalPages, currentPage: page }
+}
+
+export default async function ProdusePage({
+  searchParams,
+}: {
+  searchParams: { cat?: string; page?: string; sort?: string }
+}) {
+  const categories = await getCategories()
+  const currentPage = parseInt(searchParams.page || '1', 10)
+  const { products, totalCount, totalPages } = await getProducts(searchParams.cat, currentPage, searchParams.sort)
+
+  return (
+    <main>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white py-12">
+        <div className="container-max">
+          <h1 className="text-4xl font-bold mb-2">Catalog Produse</h1>
+          <p className="text-primary-100">
+            Explorează colecția completă de produse metalice de calitate
+          </p>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="container-max py-12">
+        <div className="grid lg:grid-cols-4 gap-8">
+          {/* Sidebar - Filters */}
+          <aside className="lg:col-span-1">
+            <div className="bg-white p-6 rounded-lg border border-dark-100 sticky top-24">
+              <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <Filter size={20} />
+                Filtre
+              </h2>
+
+              {/* Category filter */}
+              <div>
+                <h3 className="font-semibold text-dark-900 mb-3">Categorii</h3>
+                <ul className="space-y-2">
+                  {categories
+                    .filter((category) => category.name === 'Șipcă Metalică')
+                    .map((category) => (
+                      <li key={category.id}>
+                        <Link
+                          href={`/produse?cat=${category.id}`}
+                          className={`block py-2 px-3 rounded-lg transition-colors ${
+                            searchParams.cat === category.id
+                              ? 'bg-primary-50 text-primary-600 font-semibold'
+                              : 'text-dark-600 hover:bg-dark-50'
+                          }`}
+                        >
+                          {category.name}
+                        </Link>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+
+              {/* Stock filter */}
+              <div className="mt-6 pt-6 border-t border-dark-100">
+                <h3 className="font-semibold text-dark-900 mb-3">Disponibilitate</h3>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" className="w-4 h-4 rounded" defaultChecked />
+                  <span className="text-sm text-dark-600">Pe stoc</span>
+                </label>
+              </div>
+            </div>
+          </aside>
+
+          {/* Products grid */}
+          <section className="lg:col-span-3">
+            {/* Sorting */}
+            <div className="flex justify-between items-center mb-8 pb-6 border-b border-dark-100">
+              <p className="text-dark-600">
+                Afișează <span className="font-semibold">{products.length}</span> din <span className="font-semibold">{totalCount}</span> produse (Pagina {currentPage} din {totalPages})
+              </p>
+              <Suspense fallback={<div className="px-4 py-2 border border-dark-200 rounded-lg text-dark-700 text-sm" />}>
+                <SortDropdown />
+              </Suspense>
+            </div>
+
+            {/* Products */}
+            {products.length > 0 ? (
+              <>
+                <div className="grid-products">
+                  {products.map((product) => (
+                    <Link key={product.id} href={`/produse/${product.slug}`}>
+                      <div className="card card-hover h-full flex flex-col">
+                        {/* Product image */}
+                        <div className="aspect-square bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center overflow-hidden group relative">
+                          {product.media && product.media.length > 0 && product.media[0]?.url ? (
+                            <img
+                              src={product.media[0].url}
+                              alt={product.name}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                            />
+                          ) : (
+                            <>
+                              <div className="text-6xl group-hover:scale-110 transition-transform">📦</div>
+                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-colors" />
+                            </>
+                          )}
+                        </div>
+
+                        {/* Product info */}
+                        <div className="p-4 flex flex-col flex-1">
+                          <div className="flex gap-2 mb-2">
+                            {product.isFeatured && (
+                              <span className="inline-block px-2 py-1 bg-primary-100 text-primary-700 text-xs font-semibold rounded">
+                                FEATURED
+                              </span>
+                            )}
+                            {product.isBestseller && (
+                              <span className="inline-block px-2 py-1 bg-accent-100 text-accent-700 text-xs font-semibold rounded">
+                                BEST SELLER
+                              </span>
+                            )}
+                          </div>
+
+                          <h3 className="font-bold text-dark-900 truncate-2 mb-2 flex-1">
+                            {product.name}
+                          </h3>
+
+                          <p className="text-dark-600 text-sm mb-4">
+                            {product.category?.name}
+                          </p>
+
+                          <div className="flex items-center justify-between pt-4 border-t border-dark-100">
+                            <div>
+                              <p className="text-2xl font-bold text-primary-600">
+                                {product.priceFrom} RON
+                              </p>
+                              <p className="text-xs text-dark-500">
+                                {product.priceType === 'per_meter' ? 'per metru' : 'per bucată'}
+                              </p>
+                            </div>
+                            <button className="btn btn-primary btn-sm">
+                              <ArrowRight size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-2 mt-12 pt-8 border-t border-dark-100">
+                    {currentPage > 1 && (
+                      <Link
+                        href={`/produse${searchParams.cat ? `?cat=${searchParams.cat}&page=${currentPage - 1}` : `?page=${currentPage - 1}`}`}
+                        className="px-4 py-2 border border-dark-200 rounded-lg text-dark-700 hover:bg-dark-50 transition-colors font-semibold"
+                      >
+                        ← Pagina anterioară
+                      </Link>
+                    )}
+
+                    <div className="flex gap-2">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                        <Link
+                          key={pageNum}
+                          href={`/produse${searchParams.cat ? `?cat=${searchParams.cat}&page=${pageNum}` : `?page=${pageNum}`}`}
+                          className={`px-3 py-2 rounded-lg font-semibold transition-colors ${
+                            pageNum === currentPage
+                              ? 'bg-primary-600 text-white'
+                              : 'border border-dark-200 text-dark-700 hover:bg-dark-50'
+                          }`}
+                        >
+                          {pageNum}
+                        </Link>
+                      ))}
+                    </div>
+
+                    {currentPage < totalPages && (
+                      <Link
+                        href={`/produse${searchParams.cat ? `?cat=${searchParams.cat}&page=${currentPage + 1}` : `?page=${currentPage + 1}`}`}
+                        className="px-4 py-2 border border-dark-200 rounded-lg text-dark-700 hover:bg-dark-50 transition-colors font-semibold"
+                      >
+                        Pagina următoare →
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-dark-600 text-lg mb-4">Nu am găsit produse în această categorie</p>
+                <Link href="/produse" className="btn btn-primary">
+                  Vezi Toate Produsele
+                </Link>
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <section className="py-16 bg-primary-50">
+        <div className="container-max text-center">
+          <h2 className="text-3xl font-bold mb-4">Nu gasești ce cauți?</h2>
+          <p className="text-dark-600 mb-8 max-w-2xl mx-auto">
+            Contactează-ne pentru a obține o ofertă personalizată sau pentru a discuta cerintele specifice ale proiectului tău.
+          </p>
+          <Link href="/contact" className="btn btn-primary">
+            Trimite Cerere
+          </Link>
+        </div>
+      </section>
+    </main>
+  )
+}
