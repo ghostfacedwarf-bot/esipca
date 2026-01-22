@@ -1,6 +1,9 @@
 /**
  * Database initialization script
- * Runs on server startup to ensure schema is up-to-date
+ * Checks database connectivity on server startup
+ *
+ * Note: Migrations must be run separately since this is shared hosting
+ * without CLI access. Run: npx prisma migrate deploy
  */
 
 import { PrismaClient } from '@prisma/client'
@@ -15,17 +18,30 @@ export async function ensureDatabaseReady() {
   }
 
   try {
-    console.log('[DB] Checking database connection...')
+    console.log('[DB] 🔄 Database health check...')
 
     // Try to connect and run a simple query
     await prisma.$executeRawUnsafe('SELECT 1')
+    console.log('[DB] ✅ Database connection successful')
 
-    console.log('[DB] ✅ Database is ready and accessible')
     migrationCompleted = true
   } catch (error) {
-    // Database doesn't exist or schema is missing
-    console.warn('[DB] ⚠️ Database check failed:', (error as Error).message)
-    console.warn('[DB] Please run: npx prisma migrate deploy')
+    const errorMsg = (error as Error).message
+    console.error('[DB] ⚠️ Database error:', errorMsg)
+
+    // Provide helpful error messages
+    if (errorMsg.includes('Unknown database')) {
+      console.error('[DB] ❌ Database does not exist or tables not created')
+      console.error('[DB] Run: npx prisma migrate deploy')
+    } else if (errorMsg.includes('Access denied')) {
+      console.error('[DB] ❌ Database credentials incorrect')
+      console.error('[DB] Check DATABASE_URL in .env')
+    } else if (errorMsg.includes('ECONNREFUSED')) {
+      console.error('[DB] ❌ Cannot connect to database server')
+      console.error('[DB] Check host and port in DATABASE_URL')
+    }
+
+    // Mark as completed to avoid repeated errors
     migrationCompleted = true
   }
 }
