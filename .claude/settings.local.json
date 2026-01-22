@@ -23,7 +23,12 @@
       "Bash(git add:*)",
       "Bash(git config:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(taskkill:*)",
+      "WebFetch(domain:mintcream-dotterel-994812.hostingersite.com)",
+      "WebFetch(domain:localhost)",
+      "Bash(curl:*)",
+      "Bash(ls -la \"C:\\\\Users\\\\MARIA\\\\esipcametalica-next\\\\public\\\\images\"\" 2>/dev/null || ls -la \"C:UsersMARIAesipcametalica-nextimages\"\")"
     ]
   }
 }

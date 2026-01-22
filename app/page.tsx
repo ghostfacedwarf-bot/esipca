@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, CheckCircle, Zap, Shield, Users } from 'lucide-react'
 import HeroSlider from './components/HeroSlider'
+import { getFeaturedProducts } from '@/lib/db'
 
 // Static metadata
 export const metadata = {
@@ -9,7 +10,7 @@ export const metadata = {
   description: 'Furnizor de șipcă metalică, tablă zincată și jgheaburi pentru construcții. 30 ani de experiență. Consultanță profesională și livrare rapidă în România.',
 }
 
-// Fallback products for homepage
+// Fallback products for homepage (used if database fetch fails)
 const fallbackProducts = [
   {
     id: '1',
@@ -20,6 +21,7 @@ const fallbackProducts = [
     priceType: 'per_piece',
     isFeatured: true,
     isBestseller: true,
+    media: [],
   },
   {
     id: '2',
@@ -30,6 +32,7 @@ const fallbackProducts = [
     priceType: 'per_piece',
     isFeatured: true,
     isBestseller: false,
+    media: [],
   },
   {
     id: '3',
@@ -40,11 +43,21 @@ const fallbackProducts = [
     priceType: 'per_piece',
     isFeatured: false,
     isBestseller: true,
+    media: [],
   },
 ]
 
 export default async function Home() {
-  const recommendedProducts = fallbackProducts
+  // Fetch featured products from database
+  let recommendedProducts = fallbackProducts
+  try {
+    const dbProducts = await getFeaturedProducts(3)
+    if (dbProducts && dbProducts.length > 0) {
+      recommendedProducts = dbProducts
+    }
+  } catch (error) {
+    console.error('[HOME] Error fetching featured products:', error)
+  }
 
   return (
     <main>
@@ -100,8 +113,18 @@ export default async function Home() {
               <Link key={product.id} href={`/produse/${product.slug}`}>
                 <div className="card card-hover overflow-hidden h-full flex flex-col">
                   {/* Product Image */}
-                  <div className="aspect-square bg-gradient-to-br from-primary-100 to-dark-100 flex items-center justify-center text-6xl overflow-hidden">
-                    📦
+                  <div className="aspect-square bg-gradient-to-br from-primary-100 to-dark-100 flex items-center justify-center text-6xl overflow-hidden relative">
+                    {product.media && product.media.length > 0 ? (
+                      <Image
+                        src={product.media[0].url}
+                        alt={product.media[0].alt || product.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                      />
+                    ) : (
+                      <span>📦</span>
+                    )}
                   </div>
                   <div className="p-6 flex flex-col flex-1">
                     <div className="flex gap-2 mb-2">

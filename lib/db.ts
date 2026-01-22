@@ -207,6 +207,75 @@ export async function getAllProducts() {
   }
 }
 
+export async function getFeaturedProducts(limit: number = 3) {
+  const dbType = getDatabaseType()
+
+  try {
+    if (dbType === 'postgresql') {
+      const pool = await getPgPool()
+
+      const result = await pool.query(
+        `SELECT p.*, c.name as "categoryName",
+         (SELECT json_agg(sub) FROM (SELECT * FROM "Media" m WHERE m."productId" = p.id ORDER BY m."sortOrder") sub) as media
+         FROM "Product" p
+         LEFT JOIN "Category" c ON p."categoryId" = c.id
+         WHERE p."isActive" = true
+         ORDER BY RANDOM()
+         LIMIT $1`,
+        [limit]
+      )
+
+      return result.rows.map((p: any) => ({
+        ...p,
+        specs: p.specs || null,
+        category: { name: p.categoryName },
+        media: p.media || [],
+      }))
+    } else {
+      // MySQL
+      const connection = await getMysqlConnection()
+
+      const [products] = await connection.execute(
+        `SELECT p.*, c.name as categoryName
+         FROM Product p
+         LEFT JOIN Category c ON p.categoryId = c.id
+         WHERE p.isActive = true
+         ORDER BY RAND()
+         LIMIT ?`,
+        [limit]
+      )
+
+      // Get media for these products
+      const productIds = (products as any[]).map(p => p.id)
+      let mediaMap: Record<string, any[]> = {}
+
+      if (productIds.length > 0) {
+        const [allMedia] = await connection.execute(
+          `SELECT * FROM Media WHERE productId IN (${productIds.map(() => '?').join(',')}) ORDER BY sortOrder ASC`,
+          productIds
+        )
+
+        for (const m of allMedia as any[]) {
+          if (!mediaMap[m.productId]) mediaMap[m.productId] = []
+          mediaMap[m.productId].push(m)
+        }
+      }
+
+      await connection.end()
+
+      return (products as any[]).map((p) => ({
+        ...p,
+        specs: p.specs ? JSON.parse(p.specs) : null,
+        category: { name: p.categoryName },
+        media: mediaMap[p.id] || [],
+      }))
+    }
+  } catch (error) {
+    console.error('[DB] Error fetching featured products:', error)
+    return []
+  }
+}
+
 export async function getCategories() {
   const dbType = getDatabaseType()
 
