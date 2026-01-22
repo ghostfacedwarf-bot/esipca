@@ -2,6 +2,12 @@
 const nextConfig = {
   reactStrictMode: true,
 
+  // Use Webpack instead of Turbopack for Hostinger compatibility
+  // Turbopack requires worker threads which aren't available on shared hosting
+  turbopack: {
+    // Disable worker threads in Turbopack
+  },
+
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
