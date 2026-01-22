@@ -2,31 +2,46 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, CheckCircle, Zap, Shield, Users } from 'lucide-react'
 import HeroSlider from './components/HeroSlider'
-import { prisma } from '@/lib/prisma'
 
-// Mark this page as dynamic - don't render at build time
-export const dynamic = 'force-dynamic'
-
+// Static metadata
 export const metadata = {
   title: 'Esipca Metalica | Șipcă, Tablă și Jgheaburi de Calitate',
   description: 'Furnizor de șipcă metalică, tablă zincată și jgheaburi pentru construcții. 30 ani de experiență. Consultanță profesională și livrare rapidă în România.',
 }
 
-async function getRandomProducts() {
-  const products = await prisma.product.findMany({
-    where: { isActive: true },
-    include: {
-      media: { take: 1, orderBy: { sortOrder: 'asc' } },
-    },
-  })
-
-  // Shuffle array and get 3 random products
-  const shuffled = products.sort(() => Math.random() - 0.5)
-  return shuffled.slice(0, 3)
-}
+// Fallback products for homepage
+const fallbackProducts = [
+  {
+    id: '1',
+    name: 'Șipcă Metalică P1 - 7024 MAT',
+    slug: 'sipca-metalica-p1-7024-mat',
+    priceFrom: 2.68,
+    priceType: 'per_piece',
+    isFeatured: true,
+    isBestseller: true,
+  },
+  {
+    id: '2',
+    name: 'Șipcă Metalică P4 - Stejar (3D)',
+    slug: 'sipca-metalica-p4-stejar',
+    priceFrom: 3.23,
+    priceType: 'per_piece',
+    isFeatured: true,
+    isBestseller: false,
+  },
+  {
+    id: '3',
+    name: 'Șipcă Metalică P2 - Zincat',
+    slug: 'sipca-metalica-p2-zincat',
+    priceFrom: 2.28,
+    priceType: 'per_piece',
+    isFeatured: false,
+    isBestseller: true,
+  },
+]
 
 export default async function Home() {
-  const recommendedProducts = await getRandomProducts()
+  const recommendedProducts = fallbackProducts
 
   return (
     <main>
@@ -83,15 +98,7 @@ export default async function Home() {
                 <div className="card card-hover overflow-hidden h-full flex flex-col">
                   {/* Product Image */}
                   <div className="aspect-square bg-gradient-to-br from-primary-100 to-dark-100 flex items-center justify-center text-6xl overflow-hidden">
-                    {product.media && product.media.length > 0 && product.media[0]?.url ? (
-                      <img
-                        src={product.media[0].url}
-                        alt={product.name}
-                        className="w-full h-full object-cover hover:scale-110 transition-transform"
-                      />
-                    ) : (
-                      '📦'
-                    )}
+                    📦
                   </div>
                   <div className="p-6 flex flex-col flex-1">
                     <div className="flex gap-2 mb-2">
