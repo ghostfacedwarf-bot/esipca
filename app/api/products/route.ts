@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { getAllProducts } from '@/lib/db'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -9,30 +9,19 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '12', 10)
     const skip = (page - 1) * limit
 
-    const where: any = { isActive: true }
+    let products = await getAllProducts()
+
+    // Filter by category if specified
     if (categoryId) {
-      where.categoryId = categoryId
+      products = products.filter((p: any) => p.categoryId === categoryId)
     }
 
-    const [products, total] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        include: {
-          category: true,
-          media: { take: 1, orderBy: { sortOrder: 'asc' } },
-          variants: { take: 1 },
-          _count: { select: { reviews: true } },
-        },
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.product.count({ where }),
-    ])
+    const total = products.length
+    const paginatedProducts = products.slice(skip, skip + limit)
 
     return NextResponse.json(
       {
-        products,
+        products: paginatedProducts,
         pagination: {
           page,
           limit,

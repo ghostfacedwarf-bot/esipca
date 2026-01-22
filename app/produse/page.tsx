@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight, Filter } from 'lucide-react'
 import { Suspense } from 'react'
-import { prisma } from '@/lib/prisma'
+import { getAllProducts, getCategories as fetchCategories } from '@/lib/db'
 import SortDropdown from './SortDropdown'
 
 // Mark as dynamic - fetch products at runtime, not build time
@@ -13,52 +13,34 @@ export const metadata = {
 }
 
 async function getCategories() {
-  const categories = await prisma.category.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: 'asc' },
-  })
-  return categories
+  return await fetchCategories()
 }
 
 async function getProducts(categoryId?: string, page: number = 1, sort: string = 'default') {
-  const where: any = { isActive: true }
+  let products = await getAllProducts()
+
+  // Filter by category if specified
   if (categoryId) {
-    where.categoryId = categoryId
+    products = products.filter((p: any) => p.categoryId === categoryId)
+  }
+
+  // Sort products
+  if (sort === 'price-asc') {
+    products.sort((a: any, b: any) => a.priceFrom - b.priceFrom)
+  } else if (sort === 'price-desc') {
+    products.sort((a: any, b: any) => b.priceFrom - a.priceFrom)
+  } else if (sort === 'bestseller') {
+    products.sort((a: any, b: any) => (b.isBestseller ? 1 : 0) - (a.isBestseller ? 1 : 0))
   }
 
   const itemsPerPage = 9
   const skip = (page - 1) * itemsPerPage
-
-  // Build orderBy based on sort parameter
-  let orderBy: any = { createdAt: 'desc' }
-  if (sort === 'price-asc') {
-    orderBy = { priceFrom: 'asc' }
-  } else if (sort === 'price-desc') {
-    orderBy = { priceFrom: 'desc' }
-  } else if (sort === 'newest') {
-    orderBy = { createdAt: 'desc' }
-  } else if (sort === 'bestseller') {
-    orderBy = { isBestseller: 'desc' }
-  }
-
-  const [products, totalCount] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      include: {
-        category: true,
-        media: { take: 1, orderBy: { sortOrder: 'asc' } },
-        variants: { take: 1 },
-      },
-      orderBy,
-      skip,
-      take: itemsPerPage,
-    }),
-    prisma.product.count({ where }),
-  ])
+  const totalCount = products.length
+  const paginatedProducts = products.slice(skip, skip + itemsPerPage)
 
   const totalPages = Math.ceil(totalCount / itemsPerPage)
 
-  return { products, totalCount, totalPages, currentPage: page }
+  return { products: paginatedProducts, totalCount, totalPages, currentPage: page }
 }
 
 export default async function ProdusePage({

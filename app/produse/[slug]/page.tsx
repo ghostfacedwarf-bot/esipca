@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { getProductBySlug } from '@/lib/db'
 import { notFound } from 'next/navigation'
 import { ArrowRight } from 'lucide-react'
 import ProductOrderForm from './ProductOrderForm'
@@ -9,9 +9,7 @@ export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const product = await prisma.product.findUnique({
-    where: { slug },
-  })
+  const product = await getProductBySlug(slug)
 
   if (!product) {
     return {
@@ -26,16 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 async function getProduct(slug: string) {
-  const product = await prisma.product.findUnique({
-    where: { slug },
-    include: {
-      category: true,
-      variants: true,
-      media: { orderBy: { sortOrder: 'asc' } },
-      reviews: { where: { isApproved: true } },
-    },
-  })
-  return product
+  return await getProductBySlug(slug)
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
