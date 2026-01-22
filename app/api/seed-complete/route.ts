@@ -38,18 +38,20 @@ const ALL_PRODUCTS = [
   { name: 'Șipcă Metalică P22 - Stejar (3D)', slug: 'sipca-metalica-p22-stejar', price: 3.33, originalPrice: 3.48, profile: 'P22', color: 'Stejar (aspect lemn)', finish: '3D Lemn', featured: false, bestseller: false },
 ]
 
-// Heights for Șipcă Metalică - 0.6m to 3.0m
-const HEIGHTS = ['0.6 m', '0.8 m', '1.0 m', '1.2 m', '1.5 m', '1.8 m', '2.0 m', '2.4 m', '3.0 m']
+// Heights for Șipcă Metalică - 0.6m to 3.0m with 0.1m increments (25 heights)
+const HEIGHTS = [
+  '0.6 m', '0.7 m', '0.8 m', '0.9 m', '1.0 m',
+  '1.1 m', '1.2 m', '1.3 m', '1.4 m', '1.5 m',
+  '1.6 m', '1.7 m', '1.8 m', '1.9 m', '2.0 m',
+  '2.1 m', '2.2 m', '2.3 m', '2.4 m', '2.5 m',
+  '2.6 m', '2.7 m', '2.8 m', '2.9 m', '3.0 m'
+]
 const HEIGHT_MULTIPLIERS: Record<string, number> = {
-  '0.6 m': 0.6,
-  '0.8 m': 0.8,
-  '1.0 m': 1.0,
-  '1.2 m': 1.2,
-  '1.5 m': 1.5,
-  '1.8 m': 1.8,
-  '2.0 m': 2.0,
-  '2.4 m': 2.4,
-  '3.0 m': 3.0,
+  '0.6 m': 0.6, '0.7 m': 0.7, '0.8 m': 0.8, '0.9 m': 0.9, '1.0 m': 1.0,
+  '1.1 m': 1.1, '1.2 m': 1.2, '1.3 m': 1.3, '1.4 m': 1.4, '1.5 m': 1.5,
+  '1.6 m': 1.6, '1.7 m': 1.7, '1.8 m': 1.8, '1.9 m': 1.9, '2.0 m': 2.0,
+  '2.1 m': 2.1, '2.2 m': 2.2, '2.3 m': 2.3, '2.4 m': 2.4, '2.5 m': 2.5,
+  '2.6 m': 2.6, '2.7 m': 2.7, '2.8 m': 2.8, '2.9 m': 2.9, '3.0 m': 3.0,
 }
 
 export async function GET(request: NextRequest) {
