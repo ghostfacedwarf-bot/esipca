@@ -201,7 +201,9 @@ export default function ProductOrderForm({
         <div className="p-4 bg-white border border-dark-100 rounded-lg space-y-3">
           <h3 className="text-base font-bold text-dark-900">Selectează Varianta</h3>
 
-          {attributeKeys.map((key) => {
+          {attributeKeys
+            .filter((key) => key !== 'optiune_vopsea') // Skip optiune_vopsea - shown separately below
+            .map((key) => {
             const isSipcaCategory = categoryName.toLowerCase().includes('șipcă')
             const isHeightAttribute = (key.toLowerCase() === 'inaltime' || key.toLowerCase() === 'height') && isSipcaCategory
             const uniqueValues = getUniqueAttributeValues(key)
@@ -233,9 +235,6 @@ export default function ProductOrderForm({
                       )
                     })}
                   </select>
-                ) : key === 'optiune_vopsea' ? (
-                  // Skip optiune_vopsea here - we'll show it separately below
-                  null
                 ) : (
                   // Buttons for other attributes
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
