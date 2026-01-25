@@ -33,29 +33,48 @@ export default function ProductOrderForm({
   categoryName = '',
   specs = {},
 }: ProductOrderFormProps) {
+  // Extract unique paint options from variants
+  const paintOptions = Array.from(
+    new Set(
+      variants
+        .map((v) => v.attributes?.optiune_vopsea)
+        .filter((opt) => opt !== undefined)
+    )
+  ) as string[]
+
+  // Get default paint option (first one)
+  const defaultPaintOption = paintOptions.length > 0 ? paintOptions[0] : 'Standard'
+
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null)
   const [selectedHeight, setSelectedHeight] = useState('') // Separate state for height
-  const [selectedFinish, setSelectedFinish] = useState('Standard') // Finisaj spate
+  const [selectedPaintOption, setSelectedPaintOption] = useState(defaultPaintOption)
   const [quantity, setQuantity] = useState(1)
   const [length, setLength] = useState('1.0') // Lungime în metri (1.0m default)
   const [isLoading, setIsLoading] = useState(false)
   const { addItem } = useCart()
 
-  // Find matching variant based on height and finish
-  const findMatchingVariant = (height: string, finish: string) => {
+  // Find matching variant based on height and paint option
+  const findMatchingVariant = (height: string, paintOpt: string) => {
     return variants.find((v) => {
       const varHeight = String(v.attributes?.inaltime || '').replace(' m', '')
-      const varFinish = v.attributes?.finisaj_spate || 'Standard'
-      return varHeight === height && varFinish === finish
+      const varPaintOpt = v.attributes?.optiune_vopsea || 'Standard'
+      return varHeight === height && varPaintOpt === paintOpt
     })
   }
 
-  // Update variant when height or finish changes
-  const updateVariant = (height: string, finish: string) => {
-    const variant = findMatchingVariant(height, finish)
+  // Update variant when height or paint option changes
+  const updateVariant = (height: string, paintOpt: string) => {
+    const variant = findMatchingVariant(height, paintOpt)
     if (variant) {
       setSelectedVariant(variant)
     }
+  }
+
+  // Calculate price addition for paint option display
+  const getPaintOptionPriceAdd = (option: string): string => {
+    if (option.includes('mat față / mat spate')) return '+0.30 LEI/ml'
+    if (option.includes('ambele părți')) return '+0.10 LEI/ml'
+    return ''
   }
 
   // Extract bucăți per metru from specs
@@ -97,7 +116,7 @@ export default function ProductOrderForm({
 
     setIsLoading(true)
     try {
-      const finishLabel = selectedFinish === 'Standard' ? '' : ' (mat față/spate)'
+      const paintLabel = getPaintOptionPriceAdd(selectedPaintOption) ? ` - ${selectedPaintOption}` : ''
       const cartItem: CartItem = {
         id: `${productId}-${selectedVariant.id}`,
         productId,
@@ -107,7 +126,7 @@ export default function ProductOrderForm({
         attributes: {
           ...selectedVariant.attributes,
           inaltime: selectedHeight,
-          finisaj_spate: selectedFinish
+          optiune_vopsea: selectedPaintOption
         },
         price: selectedVariant.price,
         quantity,
@@ -115,7 +134,7 @@ export default function ProductOrderForm({
       }
 
       addItem(cartItem)
-      toast.success(`${productName} (${selectedHeight}m${finishLabel}) adăugat în coș!`)
+      toast.success(`${productName} (${selectedHeight}m${paintLabel}) adăugat în coș!`)
 
       // Reset form
       setQuantity(1)
@@ -200,7 +219,7 @@ export default function ProductOrderForm({
                     onChange={(e) => {
                       const selectedValue = e.target.value
                       setSelectedHeight(selectedValue)
-                      updateVariant(selectedValue, selectedFinish)
+                      updateVariant(selectedValue, selectedPaintOption)
                     }}
                     className="w-full px-4 py-3 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-semibold text-dark-900"
                   >
@@ -214,8 +233,8 @@ export default function ProductOrderForm({
                       )
                     })}
                   </select>
-                ) : key === 'finisaj_spate' ? (
-                  // Skip finisaj_spate here - we'll show it separately below
+                ) : key === 'optiune_vopsea' ? (
+                  // Skip optiune_vopsea here - we'll show it separately below
                   null
                 ) : (
                   // Buttons for other attributes
@@ -259,60 +278,59 @@ export default function ProductOrderForm({
         </div>
       )}
 
-      {/* Finish Option Selector - for Șipcă Metalică */}
-      {categoryName.toLowerCase().includes('șipcă') && (
+      {/* Paint Option Selector - for Șipcă Metalică (only if multiple options exist) */}
+      {categoryName.toLowerCase().includes('șipcă') && paintOptions.length > 1 && (
         <div className="p-4 bg-white border border-dark-100 rounded-lg">
           <label className="block text-sm font-semibold text-dark-800 mb-3">
-            Finisaj Spate
+            Opțiuni Vopsea
           </label>
           <div className="space-y-2">
-            <label className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all hover:border-primary-300"
-              style={{
-                borderColor: selectedFinish === 'Standard' ? '#16a34a' : '#e5e7eb',
-                backgroundColor: selectedFinish === 'Standard' ? '#f0fdf4' : 'white'
-              }}
-            >
-              <input
-                type="radio"
-                name="finisaj_spate"
-                value="Standard"
-                checked={selectedFinish === 'Standard'}
-                onChange={(e) => {
-                  setSelectedFinish(e.target.value)
-                  updateVariant(selectedHeight, e.target.value)
-                }}
-                className="w-4 h-4 text-primary-600"
-              />
-              <div className="flex-1">
-                <span className="font-semibold text-dark-900">Standard</span>
-                <p className="text-xs text-dark-500">Grund alb/gri pe spate</p>
-              </div>
-            </label>
-            <label className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all hover:border-primary-300"
-              style={{
-                borderColor: selectedFinish === 'Vopsit mat față / mat spate' ? '#16a34a' : '#e5e7eb',
-                backgroundColor: selectedFinish === 'Vopsit mat față / mat spate' ? '#f0fdf4' : 'white'
-              }}
-            >
-              <input
-                type="radio"
-                name="finisaj_spate"
-                value="Vopsit mat față / mat spate"
-                checked={selectedFinish === 'Vopsit mat față / mat spate'}
-                onChange={(e) => {
-                  setSelectedFinish(e.target.value)
-                  updateVariant(selectedHeight, e.target.value)
-                }}
-                className="w-4 h-4 text-primary-600"
-              />
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-dark-900">Vopsit mat față / mat spate</span>
-                  <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-bold rounded">+0.30 LEI/ml</span>
-                </div>
-                <p className="text-xs text-dark-500">Aceeași culoare pe ambele fețe</p>
-              </div>
-            </label>
+            {paintOptions.map((option) => {
+              const priceAdd = getPaintOptionPriceAdd(option)
+              const isSelected = selectedPaintOption === option
+
+              return (
+                <label
+                  key={option}
+                  className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all hover:border-primary-300"
+                  style={{
+                    borderColor: isSelected ? '#16a34a' : '#e5e7eb',
+                    backgroundColor: isSelected ? '#f0fdf4' : 'white'
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="optiune_vopsea"
+                    value={option}
+                    checked={isSelected}
+                    onChange={(e) => {
+                      setSelectedPaintOption(e.target.value)
+                      updateVariant(selectedHeight, e.target.value)
+                    }}
+                    className="w-4 h-4 text-primary-600"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-dark-900">{option}</span>
+                      {priceAdd && (
+                        <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-bold rounded">
+                          {priceAdd}
+                        </span>
+                      )}
+                    </div>
+                    {option.includes('Standard') && (
+                      <p className="text-xs text-dark-500">Grund alb/gri pe spate</p>
+                    )}
+                    {option.includes('o parte') && (
+                      <p className="text-xs text-dark-500">Vopsit doar pe față</p>
+                    )}
+                    {(option.includes('ambele') || option.includes('mat spate')) && (
+                      <p className="text-xs text-dark-500">Aceeași culoare pe ambele fețe</p>
+                    )}
+                  </div>
+                </label>
+              )
+            })}
           </div>
         </div>
       )}
@@ -349,15 +367,19 @@ export default function ProductOrderForm({
                 {selectedHeight} m
               </p>
             </div>
-            <div>
-              <p className="text-dark-600 text-xs mb-1">Finisaj spate</p>
-              <p className="font-bold text-primary-700 text-sm">
-                {selectedFinish === 'Standard' ? 'Standard (grund)' : 'Mat față/spate'}
-                {selectedFinish !== 'Standard' && (
-                  <span className="text-xs ml-1 text-primary-600">(+0.30/ml)</span>
-                )}
-              </p>
-            </div>
+            {paintOptions.length > 1 && (
+              <div>
+                <p className="text-dark-600 text-xs mb-1">Opțiune vopsea</p>
+                <p className="font-bold text-primary-700 text-sm">
+                  {selectedPaintOption}
+                  {getPaintOptionPriceAdd(selectedPaintOption) && (
+                    <span className="text-xs ml-1 text-primary-600">
+                      ({getPaintOptionPriceAdd(selectedPaintOption)})
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
             <div>
               <p className="text-dark-600 text-xs mb-1">Cod produs</p>
               <p className="font-mono font-semibold text-dark-900 text-xs">

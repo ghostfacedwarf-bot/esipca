@@ -177,23 +177,43 @@ export async function GET(request: NextRequest) {
       )
       productsAdded++
 
-      // Step 4: Add height variants for each product with finish options
-      // Each height has 2 options: Standard and Mat față/mat spate (+0.30 LEI/ml)
-      const FINISH_OPTIONS = [
-        { name: 'Standard', slug: 'standard', priceAdd: 0 },
-        { name: 'Vopsit mat față / mat spate', slug: 'mat-fata-spate', priceAdd: 0.30 },
-      ]
+      // Step 4: Add height variants for each product with appropriate finish options
+      // Options depend on product finish type:
+      // - MAT: "Vopsit mat față/mat spate" +0.30 LEI/ml
+      // - LUCIOS: "Vopsit pe o parte" (standard) / "Vopsit pe ambele părți" +0.10 LEI/ml
+      // - 3D Lemn: No options (finish included)
+      // - Zincat: No options (natural zinc)
+
+      type FinishOption = { name: string; slug: string; priceAdd: number }
+      let finishOptions: FinishOption[] = []
+
+      if (p.finish === 'Mat') {
+        finishOptions = [
+          { name: 'Standard (grund spate)', slug: 'standard', priceAdd: 0 },
+          { name: 'Vopsit mat față / mat spate', slug: 'mat-fata-spate', priceAdd: 0.30 },
+        ]
+      } else if (p.finish === 'Lucios') {
+        finishOptions = [
+          { name: 'Vopsit pe o parte', slug: 'o-parte', priceAdd: 0 },
+          { name: 'Vopsit pe ambele părți', slug: 'ambele-parti', priceAdd: 0.10 },
+        ]
+      } else {
+        // 3D Lemn or Aluminiu-Zinc - no additional options
+        finishOptions = [
+          { name: 'Standard', slug: 'standard', priceAdd: 0 },
+        ]
+      }
 
       for (const height of HEIGHTS) {
         const multiplier = HEIGHT_MULTIPLIERS[height] || 1.0
 
-        for (const finishOpt of FINISH_OPTIONS) {
+        for (const finishOpt of finishOptions) {
           const variantId = uuid()
           // Price = base price * height multiplier + finish option * height multiplier
           const variantPrice = parseFloat(((p.price + finishOpt.priceAdd) * multiplier).toFixed(2))
           const variantAttributes = JSON.stringify({
             inaltime: height,
-            finisaj_spate: finishOpt.name
+            optiune_vopsea: finishOpt.name
           })
 
           await connection.execute(
