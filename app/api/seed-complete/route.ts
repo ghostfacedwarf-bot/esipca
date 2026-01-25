@@ -177,19 +177,32 @@ export async function GET(request: NextRequest) {
       )
       productsAdded++
 
-      // Step 4: Add 9 height variants for each product
-      for (const height of HEIGHTS) {
-        const variantId = uuid()
-        const multiplier = HEIGHT_MULTIPLIERS[height] || 1.0
-        const variantPrice = parseFloat((p.price * multiplier).toFixed(2))
-        const variantAttributes = JSON.stringify({ inaltime: height })
+      // Step 4: Add height variants for each product with finish options
+      // Each height has 2 options: Standard and Mat față/mat spate (+0.30 LEI/ml)
+      const FINISH_OPTIONS = [
+        { name: 'Standard', slug: 'standard', priceAdd: 0 },
+        { name: 'Vopsit mat față / mat spate', slug: 'mat-fata-spate', priceAdd: 0.30 },
+      ]
 
-        await connection.execute(
-          `INSERT INTO Variant (id, productId, sku, attributes, price, stockStatus, stockQty)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [variantId, productId, `${p.slug}-${height.replace(' ', '')}`, variantAttributes, variantPrice, 'in_stock', 9999]
-        )
-        variantsAdded++
+      for (const height of HEIGHTS) {
+        const multiplier = HEIGHT_MULTIPLIERS[height] || 1.0
+
+        for (const finishOpt of FINISH_OPTIONS) {
+          const variantId = uuid()
+          // Price = base price * height multiplier + finish option * height multiplier
+          const variantPrice = parseFloat(((p.price + finishOpt.priceAdd) * multiplier).toFixed(2))
+          const variantAttributes = JSON.stringify({
+            inaltime: height,
+            finisaj_spate: finishOpt.name
+          })
+
+          await connection.execute(
+            `INSERT INTO Variant (id, productId, sku, attributes, price, stockStatus, stockQty)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [variantId, productId, `${p.slug}-${height.replace(' ', '')}-${finishOpt.slug}`, variantAttributes, variantPrice, 'in_stock', 9999]
+          )
+          variantsAdded++
+        }
       }
     }
 
