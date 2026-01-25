@@ -33,14 +33,30 @@ export default function ProductOrderForm({
   categoryName = '',
   specs = {},
 }: ProductOrderFormProps) {
-  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(
-    variants.length > 0 ? variants[0] : null
-  )
+  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null)
   const [selectedHeight, setSelectedHeight] = useState('') // Separate state for height
+  const [selectedFinish, setSelectedFinish] = useState('Standard') // Finisaj spate
   const [quantity, setQuantity] = useState(1)
   const [length, setLength] = useState('1.0') // Lungime în metri (1.0m default)
   const [isLoading, setIsLoading] = useState(false)
   const { addItem } = useCart()
+
+  // Find matching variant based on height and finish
+  const findMatchingVariant = (height: string, finish: string) => {
+    return variants.find((v) => {
+      const varHeight = String(v.attributes?.inaltime || '').replace(' m', '')
+      const varFinish = v.attributes?.finisaj_spate || 'Standard'
+      return varHeight === height && varFinish === finish
+    })
+  }
+
+  // Update variant when height or finish changes
+  const updateVariant = (height: string, finish: string) => {
+    const variant = findMatchingVariant(height, finish)
+    if (variant) {
+      setSelectedVariant(variant)
+    }
+  }
 
   // Extract bucăți per metru from specs
   const bucinPerMetru = parseInt(String(specs?.bucinPerMetru || 10), 10)
@@ -81,20 +97,25 @@ export default function ProductOrderForm({
 
     setIsLoading(true)
     try {
+      const finishLabel = selectedFinish === 'Standard' ? '' : ' (mat față/spate)'
       const cartItem: CartItem = {
-        id: `${productId}-${selectedVariant.id}-${selectedHeight}`,
+        id: `${productId}-${selectedVariant.id}`,
         productId,
         variantId: selectedVariant.id,
         productName,
         sku: selectedVariant.sku,
-        attributes: { ...selectedVariant.attributes, inaltime: selectedHeight },
+        attributes: {
+          ...selectedVariant.attributes,
+          inaltime: selectedHeight,
+          finisaj_spate: selectedFinish
+        },
         price: selectedVariant.price,
         quantity,
         priceType,
       }
 
       addItem(cartItem)
-      toast.success(`${productName} (${selectedHeight}m) adăugat în coș!`)
+      toast.success(`${productName} (${selectedHeight}m${finishLabel}) adăugat în coș!`)
 
       // Reset form
       setQuantity(1)
@@ -179,19 +200,7 @@ export default function ProductOrderForm({
                     onChange={(e) => {
                       const selectedValue = e.target.value
                       setSelectedHeight(selectedValue)
-
-                      // Try to match with existing variant if available
-                      const matchingVariant = variants.find(
-                        (v) => String(v.attributes[key]) === selectedValue
-                      )
-
-                      // If found, use it. Otherwise use the first variant (default)
-                      if (matchingVariant) {
-                        setSelectedVariant(matchingVariant)
-                      } else if (variants.length > 0) {
-                        // Use first variant as fallback
-                        setSelectedVariant(variants[0])
-                      }
+                      updateVariant(selectedValue, selectedFinish)
                     }}
                     className="w-full px-4 py-3 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-semibold text-dark-900"
                   >
@@ -205,6 +214,9 @@ export default function ProductOrderForm({
                       )
                     })}
                   </select>
+                ) : key === 'finisaj_spate' ? (
+                  // Skip finisaj_spate here - we'll show it separately below
+                  null
                 ) : (
                   // Buttons for other attributes
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -247,6 +259,64 @@ export default function ProductOrderForm({
         </div>
       )}
 
+      {/* Finish Option Selector - for Șipcă Metalică */}
+      {categoryName.toLowerCase().includes('șipcă') && (
+        <div className="p-4 bg-white border border-dark-100 rounded-lg">
+          <label className="block text-sm font-semibold text-dark-800 mb-3">
+            Finisaj Spate
+          </label>
+          <div className="space-y-2">
+            <label className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all hover:border-primary-300"
+              style={{
+                borderColor: selectedFinish === 'Standard' ? '#16a34a' : '#e5e7eb',
+                backgroundColor: selectedFinish === 'Standard' ? '#f0fdf4' : 'white'
+              }}
+            >
+              <input
+                type="radio"
+                name="finisaj_spate"
+                value="Standard"
+                checked={selectedFinish === 'Standard'}
+                onChange={(e) => {
+                  setSelectedFinish(e.target.value)
+                  updateVariant(selectedHeight, e.target.value)
+                }}
+                className="w-4 h-4 text-primary-600"
+              />
+              <div className="flex-1">
+                <span className="font-semibold text-dark-900">Standard</span>
+                <p className="text-xs text-dark-500">Grund alb/gri pe spate</p>
+              </div>
+            </label>
+            <label className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all hover:border-primary-300"
+              style={{
+                borderColor: selectedFinish === 'Vopsit mat față / mat spate' ? '#16a34a' : '#e5e7eb',
+                backgroundColor: selectedFinish === 'Vopsit mat față / mat spate' ? '#f0fdf4' : 'white'
+              }}
+            >
+              <input
+                type="radio"
+                name="finisaj_spate"
+                value="Vopsit mat față / mat spate"
+                checked={selectedFinish === 'Vopsit mat față / mat spate'}
+                onChange={(e) => {
+                  setSelectedFinish(e.target.value)
+                  updateVariant(selectedHeight, e.target.value)
+                }}
+                className="w-4 h-4 text-primary-600"
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-dark-900">Vopsit mat față / mat spate</span>
+                  <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-bold rounded">+0.30 LEI/ml</span>
+                </div>
+                <p className="text-xs text-dark-500">Aceeași culoare pe ambele fețe</p>
+              </div>
+            </label>
+          </div>
+        </div>
+      )}
+
       {/* Length Input */}
       <div className="p-4 bg-white border border-dark-100 rounded-lg">
         <label className="block text-sm font-semibold text-dark-800 mb-2">
@@ -270,17 +340,24 @@ export default function ProductOrderForm({
       </div>
 
       {/* Variant Details & Pricing */}
-      {selectedVariant && (
+      {selectedVariant && selectedHeight && (
         <div className="p-3 bg-primary-50 rounded-lg border border-primary-200">
           <div className="grid md:grid-cols-2 gap-2 text-sm">
-            {selectedHeight && (
-              <div>
-                <p className="text-dark-600 text-xs mb-1">Înălțime selectată</p>
-                <p className="font-bold text-primary-700 text-sm">
-                  {selectedHeight} m
-                </p>
-              </div>
-            )}
+            <div>
+              <p className="text-dark-600 text-xs mb-1">Înălțime selectată</p>
+              <p className="font-bold text-primary-700 text-sm">
+                {selectedHeight} m
+              </p>
+            </div>
+            <div>
+              <p className="text-dark-600 text-xs mb-1">Finisaj spate</p>
+              <p className="font-bold text-primary-700 text-sm">
+                {selectedFinish === 'Standard' ? 'Standard (grund)' : 'Mat față/spate'}
+                {selectedFinish !== 'Standard' && (
+                  <span className="text-xs ml-1 text-primary-600">(+0.30/ml)</span>
+                )}
+              </p>
+            </div>
             <div>
               <p className="text-dark-600 text-xs mb-1">Cod produs</p>
               <p className="font-mono font-semibold text-dark-900 text-xs">
