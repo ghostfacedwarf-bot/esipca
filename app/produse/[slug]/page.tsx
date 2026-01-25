@@ -35,12 +35,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     notFound()
   }
 
-  const avgRating = product.reviews.length > 0
-    ? Math.round(
-        product.reviews.reduce((sum, r) => sum + r.rating, 0) / product.reviews.length
-      )
-    : 5
-
   return (
     <main>
       {/* Breadcrumb */}
@@ -72,38 +66,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
             <h1 className="text-4xl font-bold mb-2">{product.name}</h1>
 
-            {/* Badges */}
-            <div className="flex gap-2 mb-3">
-              {product.isFeatured && (
-                <span className="inline-block px-3 py-1 bg-primary-100 text-primary-700 text-xs font-semibold rounded-full">
-                  FEATURED
-                </span>
-              )}
-              {product.isBestseller && (
-                <span className="inline-block px-3 py-1 bg-accent-100 text-accent-700 text-xs font-semibold rounded-full">
-                  BEST SELLER
-                </span>
-              )}
-              {product.variants?.[0]?.stockStatus === 'in_stock' && (
+            {/* Stock Badge */}
+            {product.variants?.[0]?.stockStatus === 'in_stock' && (
+              <div className="flex gap-2 mb-3">
                 <span className="inline-block px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
                   PE STOC
                 </span>
-              )}
-            </div>
-
-            {/* Ratings */}
-            <div className="flex items-center gap-4 mb-3 pb-3 border-b border-dark-100">
-              <div className="flex gap-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <span key={i} className={i < avgRating ? 'text-yellow-400 text-lg' : 'text-dark-300 text-lg'}>
-                    ★
-                  </span>
-                ))}
               </div>
-              <span className="text-dark-600 text-sm">
-                ({product.reviews.length} recenzii)
-              </span>
-            </div>
+            )}
 
             {/* Price */}
             <div className="mb-4 p-4 bg-primary-50 rounded-lg">
@@ -210,31 +180,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </section>
       )}
 
-      {/* Reviews section */}
-      {product.reviews.length > 0 && (
-        <section className="py-8">
-          <div className="container-max max-w-3xl">
-            <h2 className="text-2xl font-bold mb-4">Recenzii Clienți ({product.reviews.length})</h2>
-            <div className="space-y-4">
-              {product.reviews.map((review) => (
-                <div key={review.id} className="border-b border-dark-100 pb-4 last:border-0">
-                  <div className="mb-2">
-                    <p className="font-semibold text-dark-900 text-sm">{review.name}</p>
-                    <div className="flex gap-0.5 my-1">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <span key={i} className={`text-sm ${i < review.rating ? 'text-yellow-400' : 'text-dark-300'}`}>
-                          ★
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  {review.text && <p className="text-dark-700 text-sm">{review.text}</p>}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Related products CTA */}
       <section className="py-8 bg-primary-600 text-white">

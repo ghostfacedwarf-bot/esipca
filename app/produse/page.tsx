@@ -147,19 +147,6 @@ export default async function ProdusePage({
 
                         {/* Product info */}
                         <div className="p-4 flex flex-col flex-1">
-                          <div className="flex gap-2 mb-2">
-                            {product.isFeatured && (
-                              <span className="inline-block px-2 py-1 bg-primary-100 text-primary-700 text-xs font-semibold rounded">
-                                FEATURED
-                              </span>
-                            )}
-                            {product.isBestseller && (
-                              <span className="inline-block px-2 py-1 bg-accent-100 text-accent-700 text-xs font-semibold rounded">
-                                BEST SELLER
-                              </span>
-                            )}
-                          </div>
-
                           <h3 className="font-bold text-dark-900 truncate-2 mb-2 flex-1">
                             {product.name}
                           </h3>

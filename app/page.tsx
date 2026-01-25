@@ -127,18 +127,6 @@ export default async function Home() {
                     )}
                   </div>
                   <div className="p-6 flex flex-col flex-1">
-                    <div className="flex gap-2 mb-2">
-                      {product.isFeatured && (
-                        <span className="inline-block px-3 py-1 bg-primary-100 text-primary-700 text-xs font-semibold rounded-full">
-                          FEATURED
-                        </span>
-                      )}
-                      {product.isBestseller && (
-                        <span className="inline-block px-3 py-1 bg-accent-100 text-accent-700 text-xs font-semibold rounded-full">
-                          BEST SELLER
-                        </span>
-                      )}
-                    </div>
                     <h3 className="text-lg font-bold mb-2 line-clamp-2">{product.name}</h3>
                     <p className="text-dark-600 text-sm mb-4 flex-1 line-clamp-2">{product.shortDescription}</p>
                     <div className="flex items-center justify-between pt-4 border-t border-dark-200">
