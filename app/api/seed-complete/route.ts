@@ -2,40 +2,58 @@ import { NextRequest, NextResponse } from 'next/server'
 import mysql from 'mysql2/promise'
 import { v4 as uuid } from 'uuid'
 
-// Template description for all sipca products
-const sipcaDescription = `Șipcă metalică DX 51 din tablă zincată (0.45mm × 9cm) - 10 buc/metru. Disponibilă în profile variate, culori RAL diverse (mat/lucios/3D lemn). Garanție 30 ani, transport gratuit, retur 30 zile.`
+// Profile specifications based on esipcametalica.ro
+// P1-P9: 9cm width, 10 buc/ml, 2 cute (grooves)
+// P10-P18: 11.5cm width, 8 buc/ml, 3 cute (grooves)
+// P19-P27: 10cm width, 9 buc/ml, 3 cute (grooves)
+const getProfileSpecs = (profile: string): { latime: string; bucPerMetru: number; cute: string } => {
+  const num = parseInt(profile.replace('P', ''))
+  if (num >= 1 && num <= 9) {
+    return { latime: '9 cm', bucPerMetru: 10, cute: '2 cute cu vârf semirotund' }
+  } else if (num >= 10 && num <= 18) {
+    return { latime: '11.5 cm', bucPerMetru: 8, cute: '3 cute cu margini fălțuite' }
+  } else {
+    return { latime: '10 cm', bucPerMetru: 9, cute: '3 cute cu margini fălțuite' }
+  }
+}
+
+// Template description generator based on profile specs
+const getSipcaDescription = (profile: string): string => {
+  const specs = getProfileSpecs(profile)
+  return `Șipcă metalică DX 51 din tablă zincată (0.45mm × ${specs.latime}) - ${specs.bucPerMetru} buc/metru liniar. Model ${specs.cute}. Disponibilă în culori RAL diverse (mat/lucios/3D lemn). Garanție 30 ani, transport gratuit, retur 30 zile.`
+}
 
 const ALL_PRODUCTS = [
-  // PAGE 1 - Products 1-12
+  // P1-P9: Lățime 9cm, 10 buc/ml
   { name: 'Șipcă Metalică P1 - 7024 MAT', slug: 'sipca-metalica-p1-7024-mat', price: 2.68, originalPrice: 2.83, profile: 'P1', color: '7024 Negru', finish: 'Mat', featured: true, bestseller: true },
-  { name: 'Șipcă Metalică P10 - 7024 MAT', slug: 'sipca-metalica-p10-7024-mat', price: 3.18, originalPrice: 3.33, profile: 'P10', color: '7024 Negru', finish: 'Mat', featured: false, bestseller: false },
-  { name: 'Șipcă Metalică P11 - 5010 LUCIOS', slug: 'sipca-metalica-p11-5010-lucios', price: 2.93, originalPrice: 3.08, profile: 'P11', color: '5010 Albastru', finish: 'Lucios', featured: false, bestseller: false },
-  { name: 'Șipcă Metalică P12 - 8017 MAT', slug: 'sipca-metalica-p12-8017-mat', price: 3.18, originalPrice: 3.33, profile: 'P12', color: '8017 Maro', finish: 'Mat', featured: false, bestseller: false },
-  { name: 'Șipcă Metalică P14 - 8019 MAT', slug: 'sipca-metalica-p14-8019-mat', price: 3.33, originalPrice: 3.48, profile: 'P14', color: '8019 Negru intens', finish: 'Mat', featured: false, bestseller: false },
-  { name: 'Șipcă Metalică P15 - 3011 LUCIOS', slug: 'sipca-metalica-p15-3011-lucios', price: 2.88, originalPrice: 3.03, profile: 'P15', color: '3011 Roșu-maro', finish: 'Lucios', featured: false, bestseller: false },
-  { name: 'Șipcă Metalică P16 - 8017 LUCIOS', slug: 'sipca-metalica-p16-8017-lucios', price: 2.88, originalPrice: 3.03, profile: 'P16', color: '8017 Maro', finish: 'Lucios', featured: false, bestseller: false },
-  { name: 'Șipcă Metalică P17 - 8004 MAT', slug: 'sipca-metalica-p17-8004-mat', price: 3.18, originalPrice: 3.33, profile: 'P17', color: '8004 Negru pur', finish: 'Mat', featured: false, bestseller: false },
-  { name: 'Șipcă Metalică P18 - 9005 MAT', slug: 'sipca-metalica-p18-9005-mat', price: 3.18, originalPrice: 3.33, profile: 'P18', color: '9005 Negru profund', finish: 'Mat', featured: false, bestseller: false },
-  { name: 'Șipcă Metalică P19 - 7024 MAT', slug: 'sipca-metalica-p19-7024-mat', price: 2.78, originalPrice: 2.93, profile: 'P19', color: '7024 Negru', finish: 'Mat', featured: false, bestseller: false },
   { name: 'Șipcă Metalică P2 - Zincat (AL ZN)', slug: 'sipca-metalica-p2-zincat', price: 2.28, originalPrice: 2.43, profile: 'P2', color: 'Zincat natural', finish: 'Aluminiu-Zinc', featured: false, bestseller: true },
-  { name: 'Șipcă Metalică P20 - Zincat (AL ZN)', slug: 'sipca-metalica-p20-zincat', price: 2.38, originalPrice: 2.53, profile: 'P20', color: 'Zincat natural', finish: 'Aluminiu-Zinc', featured: false, bestseller: false },
-  // PAGE 2 - Products 13-24
   { name: 'Șipcă Metalică P3 - 8017 MAT', slug: 'sipca-metalica-p3-8017-mat', price: 2.68, originalPrice: 2.83, profile: 'P3', color: '8017 Maro', finish: 'Mat', featured: false, bestseller: false },
+  { name: 'Șipcă Metalică P4 - Stejar (3D)', slug: 'sipca-metalica-p4-stejar', price: 3.23, originalPrice: 3.38, profile: 'P4', color: 'Stejar (aspect lemn)', finish: '3D Lemn', featured: true, bestseller: false },
   { name: 'Șipcă Metalică P5 - 8019 MAT', slug: 'sipca-metalica-p5-8019-mat', price: 2.68, originalPrice: 2.83, profile: 'P5', color: '8019 Negru intens', finish: 'Mat', featured: false, bestseller: false },
   { name: 'Șipcă Metalică P6 - 3011 LUCIOS', slug: 'sipca-metalica-p6-3011-lucios', price: 2.43, originalPrice: 2.58, profile: 'P6', color: '3011 Roșu-maro', finish: 'Lucios', featured: false, bestseller: false },
   { name: 'Șipcă Metalică P7 - 8017 LUCIOS', slug: 'sipca-metalica-p7-8017-lucios', price: 2.43, originalPrice: 2.58, profile: 'P7', color: '8017 Maro', finish: 'Lucios', featured: false, bestseller: false },
   { name: 'Șipcă Metalică P8 - 8004 MAT', slug: 'sipca-metalica-p8-8004-mat', price: 2.68, originalPrice: 2.83, profile: 'P8', color: '8004 Negru pur', finish: 'Mat', featured: false, bestseller: false },
   { name: 'Șipcă Metalică P9 - 9005 MAT', slug: 'sipca-metalica-p9-9005-mat', price: 2.68, originalPrice: 2.83, profile: 'P9', color: '9005 Negru profund', finish: 'Mat', featured: true, bestseller: false },
+  // P10-P18: Lățime 11.5cm, 8 buc/ml
+  { name: 'Șipcă Metalică P10 - 7024 MAT', slug: 'sipca-metalica-p10-7024-mat', price: 3.18, originalPrice: 3.33, profile: 'P10', color: '7024 Negru', finish: 'Mat', featured: false, bestseller: false },
+  { name: 'Șipcă Metalică P11 - 5010 LUCIOS', slug: 'sipca-metalica-p11-5010-lucios', price: 2.93, originalPrice: 3.08, profile: 'P11', color: '5010 Albastru', finish: 'Lucios', featured: false, bestseller: false },
+  { name: 'Șipcă Metalică P12 - 8017 MAT', slug: 'sipca-metalica-p12-8017-mat', price: 3.18, originalPrice: 3.33, profile: 'P12', color: '8017 Maro', finish: 'Mat', featured: false, bestseller: false },
+  { name: 'Șipcă Metalică P13 - Stejar (3D)', slug: 'sipca-metalica-p13-stejar', price: 3.58, originalPrice: 3.73, profile: 'P13', color: 'Stejar (aspect lemn)', finish: '3D Lemn', featured: false, bestseller: false },
+  { name: 'Șipcă Metalică P14 - 8019 MAT', slug: 'sipca-metalica-p14-8019-mat', price: 3.33, originalPrice: 3.48, profile: 'P14', color: '8019 Negru intens', finish: 'Mat', featured: false, bestseller: false },
+  { name: 'Șipcă Metalică P15 - 3011 LUCIOS', slug: 'sipca-metalica-p15-3011-lucios', price: 2.88, originalPrice: 3.03, profile: 'P15', color: '3011 Roșu-maro', finish: 'Lucios', featured: false, bestseller: false },
+  { name: 'Șipcă Metalică P16 - 8017 LUCIOS', slug: 'sipca-metalica-p16-8017-lucios', price: 2.88, originalPrice: 3.03, profile: 'P16', color: '8017 Maro', finish: 'Lucios', featured: false, bestseller: false },
+  { name: 'Șipcă Metalică P17 - 8004 MAT', slug: 'sipca-metalica-p17-8004-mat', price: 3.18, originalPrice: 3.33, profile: 'P17', color: '8004 Negru pur', finish: 'Mat', featured: false, bestseller: false },
+  { name: 'Șipcă Metalică P18 - 9005 MAT', slug: 'sipca-metalica-p18-9005-mat', price: 3.18, originalPrice: 3.33, profile: 'P18', color: '9005 Negru profund', finish: 'Mat', featured: false, bestseller: false },
+  // P19-P27: Lățime 10cm, 9 buc/ml
+  { name: 'Șipcă Metalică P19 - 7024 MAT', slug: 'sipca-metalica-p19-7024-mat', price: 2.78, originalPrice: 2.93, profile: 'P19', color: '7024 Negru', finish: 'Mat', featured: false, bestseller: false },
+  { name: 'Șipcă Metalică P20 - Zincat (AL ZN)', slug: 'sipca-metalica-p20-zincat', price: 2.38, originalPrice: 2.53, profile: 'P20', color: 'Zincat natural', finish: 'Aluminiu-Zinc', featured: false, bestseller: false },
   { name: 'Șipcă Metalică P21 - 8017 MAT', slug: 'sipca-metalica-p21-8017-mat', price: 2.78, originalPrice: 2.93, profile: 'P21', color: '8017 Maro', finish: 'Mat', featured: false, bestseller: false },
+  { name: 'Șipcă Metalică P22 - Stejar (3D)', slug: 'sipca-metalica-p22-stejar', price: 3.33, originalPrice: 3.48, profile: 'P22', color: 'Stejar (aspect lemn)', finish: '3D Lemn', featured: false, bestseller: false },
   { name: 'Șipcă Metalică P23 - 8019 MAT', slug: 'sipca-metalica-p23-8019-mat', price: 2.93, originalPrice: 3.08, profile: 'P23', color: '8019 Negru intens', finish: 'Mat', featured: false, bestseller: false },
   { name: 'Șipcă Metalică P24 - 3011 LUCIOS', slug: 'sipca-metalica-p24-3011-lucios', price: 2.53, originalPrice: 2.68, profile: 'P24', color: '3011 Roșu-maro', finish: 'Lucios', featured: false, bestseller: false },
   { name: 'Șipcă Metalică P25 - 8017 LUCIOS', slug: 'sipca-metalica-p25-8017-lucios', price: 2.53, originalPrice: 2.68, profile: 'P25', color: '8017 Maro', finish: 'Lucios', featured: false, bestseller: false },
   { name: 'Șipcă Metalică P26 - 8004 MAT', slug: 'sipca-metalica-p26-8004-mat', price: 2.78, originalPrice: 2.93, profile: 'P26', color: '8004 Negru pur', finish: 'Mat', featured: false, bestseller: false },
   { name: 'Șipcă Metalică P27 - 9005 MAT', slug: 'sipca-metalica-p27-9005-mat', price: 2.93, originalPrice: 3.08, profile: 'P27', color: '9005 Negru profund', finish: 'Mat', featured: false, bestseller: false },
-  // PAGE 3 - 3D Wood Imitation Products 25-27
-  { name: 'Șipcă Metalică P4 - Stejar (3D)', slug: 'sipca-metalica-p4-stejar', price: 3.23, originalPrice: 3.38, profile: 'P4', color: 'Stejar (aspect lemn)', finish: '3D Lemn', featured: true, bestseller: false },
-  { name: 'Șipcă Metalică P13 - Stejar (3D)', slug: 'sipca-metalica-p13-stejar', price: 3.58, originalPrice: 3.73, profile: 'P13', color: 'Stejar (aspect lemn)', finish: '3D Lemn', featured: false, bestseller: false },
-  { name: 'Șipcă Metalică P22 - Stejar (3D)', slug: 'sipca-metalica-p22-stejar', price: 3.33, originalPrice: 3.48, profile: 'P22', color: 'Stejar (aspect lemn)', finish: '3D Lemn', featured: false, bestseller: false },
 ]
 
 // Heights for Șipcă Metalică - 0.6m to 3.0m with 0.1m increments (25 heights)
@@ -136,18 +154,20 @@ export async function GET(request: NextRequest) {
       productIds.push(productId)
       productSlugToId[p.slug] = productId
 
-      const shortDesc = `${p.profile} - Culoare ${p.color} - Finisaj ${p.finish}`
-      const longDesc = sipcaDescription.replace('Culoare RAL', `Culoare: ${p.color} - Finisaj: ${p.finish}`)
+      const profileSpecs = getProfileSpecs(p.profile)
+      const shortDesc = `${p.profile} - ${profileSpecs.latime} - ${profileSpecs.bucPerMetru} buc/ml - ${p.color} ${p.finish}`
+      const longDesc = getSipcaDescription(p.profile)
 
-      // Complete specs matching seed-final.ts
+      // Complete specs with correct width and pieces per meter
       const specs = JSON.stringify({
         material: 'Tablă zincată DX 51',
         profil: p.profile,
         culoare: p.color,
         grosime: '0.45 mm',
-        latime: '9 cm',
+        latime: profileSpecs.latime,
         finisaj: p.finish,
-        bucinPerMetru: '10',
+        bucPerMetru: profileSpecs.bucPerMetru.toString(),
+        model: profileSpecs.cute,
       })
 
       await connection.execute(
