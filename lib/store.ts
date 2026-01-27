@@ -3,6 +3,48 @@ import { persist } from 'zustand/middleware'
 
 export type Region = 'RO' | 'EU'
 
+// ============ REGION STORE ============
+interface RegionStore {
+  region: Region
+  isLoading: boolean
+  setRegion: (region: Region) => void
+  setLoading: (loading: boolean) => void
+}
+
+export const useRegionStore = create<RegionStore>()(
+  persist(
+    (set) => ({
+      region: 'RO',
+      isLoading: true,
+      setRegion: (region) => set({ region }),
+      setLoading: (isLoading) => set({ isLoading }),
+    }),
+    {
+      name: 'esipca-region',
+      onRehydrateStorage: () => (state) => {
+        // When store is rehydrated from localStorage, set loading to false
+        if (state) {
+          state.setLoading(false)
+        }
+      },
+    }
+  )
+)
+
+// Helper function to get regional price
+export function getRegionalPrice(priceRO: number, priceEU: number | null | undefined, region: Region): number {
+  if (region === 'EU' && priceEU != null) {
+    return priceEU
+  }
+  // For EU without priceEU, double the RO price
+  if (region === 'EU') {
+    return priceRO * 2
+  }
+  return priceRO
+}
+
+// ============ CART STORE ============
+
 export interface CartItem {
   id: string
   productId: string

@@ -1,8 +1,9 @@
 import Link from 'next/link'
-import { ArrowRight, Filter } from 'lucide-react'
+import { Filter } from 'lucide-react'
 import { Suspense } from 'react'
 import { getAllProducts, getCategories as fetchCategories } from '@/lib/db'
 import SortDropdown from './SortDropdown'
+import ProductCard from './ProductCard'
 
 // Mark as dynamic - fetch products at runtime, not build time
 export const dynamic = 'force-dynamic'
@@ -127,50 +128,7 @@ export default async function ProdusePage({
               <>
                 <div className="grid-products">
                   {products.map((product) => (
-                    <Link key={product.id} href={`/produse/${product.slug}`}>
-                      <div className="card card-hover h-full flex flex-col">
-                        {/* Product image */}
-                        <div className="aspect-square bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center overflow-hidden group relative">
-                          {product.media && product.media.length > 0 && product.media[0]?.url ? (
-                            <img
-                              src={product.media[0].url}
-                              alt={product.name}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                            />
-                          ) : (
-                            <>
-                              <div className="text-6xl group-hover:scale-110 transition-transform">📦</div>
-                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-colors" />
-                            </>
-                          )}
-                        </div>
-
-                        {/* Product info */}
-                        <div className="p-4 flex flex-col flex-1">
-                          <h3 className="font-bold text-dark-900 truncate-2 mb-2 flex-1">
-                            {product.name}
-                          </h3>
-
-                          <p className="text-dark-600 text-sm mb-4">
-                            {product.category?.name}
-                          </p>
-
-                          <div className="flex items-center justify-between pt-4 border-t border-dark-100">
-                            <div>
-                              <p className="text-2xl font-bold text-primary-600">
-                                {product.priceFrom} RON
-                              </p>
-                              <p className="text-xs text-dark-500">
-                                {product.priceType === 'per_meter' ? 'per metru' : 'per bucată'}
-                              </p>
-                            </div>
-                            <button className="btn btn-primary btn-sm">
-                              <ArrowRight size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
+                    <ProductCard key={product.id} product={product} />
                   ))}
                 </div>
 

@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { ShoppingCart, Share2, AlertCircle } from 'lucide-react'
-import { useCart, CartItem } from '@/lib/store'
-import { useRegion, getRegionalPrice } from '@/lib/region-context'
+import { useCart, CartItem, useRegionStore, getRegionalPrice } from '@/lib/store'
+import { useExchangeRate, ronToEur, formatEur } from '@/lib/useExchangeRate'
 import { toast } from 'react-hot-toast'
 
 interface Variant {
@@ -54,11 +54,17 @@ export default function ProductOrderForm({
   const [length, setLength] = useState('1.0') // Lungime în metri (1.0m default)
   const [isLoading, setIsLoading] = useState(false)
   const { addItem } = useCart()
-  const { region } = useRegion()
+  const region = useRegionStore((state) => state.region)
+  const { rate: eurRate } = useExchangeRate()
+
+  // Calculate base price for region (use first variant's priceEU ratio or default to double for EU)
+  const basePrice = region === 'EU'
+    ? (variants[0]?.priceEU ? (priceFrom * (variants[0].priceEU / variants[0].price)) : priceFrom * 2)
+    : priceFrom
 
   // Get regional price for a variant
   const getVariantPrice = (variant: Variant | null): number => {
-    if (!variant) return priceFrom
+    if (!variant) return basePrice // Use regional base price when no variant selected
     return getRegionalPrice(variant.price, variant.priceEU, region)
   }
 
@@ -209,7 +215,28 @@ export default function ProductOrderForm({
   const attributeKeys = getAttributeKeys()
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 notranslate" translate="no">
+      {/* Regional Base Price */}
+      <div className="p-4 bg-primary-50 rounded-lg">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-dark-600 text-sm">Preț de bază</p>
+          <span className="text-xs px-2 py-1 bg-white rounded-full text-dark-600">
+            {region === 'EU' ? '🇪🇺 Europa' : '🇷🇴 Romania'}
+          </span>
+        </div>
+        <div className="flex items-baseline gap-3">
+          <span className="text-4xl font-bold text-primary-600">
+            {basePrice.toFixed(2)}
+          </span>
+          <span className="text-xl text-dark-700">
+            RON/{priceType === 'per_meter' ? 'metru' : 'bucată'}
+          </span>
+        </div>
+        <p className="text-sm text-dark-500 mt-1">
+          ~{formatEur(ronToEur(basePrice, eurRate))} EUR <span className="text-xs">(curs BNR)</span>
+        </p>
+      </div>
+
       {/* Variant Selector */}
       {attributeKeys.length > 0 && (
         <div className="p-4 bg-white border border-dark-100 rounded-lg space-y-3">
@@ -237,13 +264,14 @@ export default function ProductOrderForm({
                       setSelectedHeight(selectedValue)
                       updateVariant(selectedValue, selectedPaintOption)
                     }}
-                    className="w-full px-4 py-3 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-semibold text-dark-900"
+                    className="w-full px-4 py-3 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-semibold text-dark-900 notranslate"
+                    translate="no"
                   >
                     <option value="">Selectează o înălțime...</option>
                     {Array.from({ length: 25 }, (_, i) => {
                       const height = (0.6 + i * 0.1).toFixed(1)
                       return (
-                        <option key={height} value={height}>
+                        <option key={height} value={height} className="notranslate" translate="no">
                           {height} m
                         </option>
                       )
@@ -349,7 +377,7 @@ export default function ProductOrderForm({
       )}
 
       {/* Length Input */}
-      <div className="p-4 bg-white border border-dark-100 rounded-lg">
+      <div className="p-4 bg-white border border-dark-100 rounded-lg notranslate" translate="no">
         <label className="block text-sm font-semibold text-dark-800 mb-2">
           Lungime (m)
         </label>
@@ -361,7 +389,8 @@ export default function ProductOrderForm({
             placeholder="Ex: 87.5"
             step="0.1"
             min="0.1"
-            className="flex-1 px-4 py-2 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-semibold text-dark-900 text-sm"
+            className="flex-1 px-4 py-2 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-semibold text-dark-900 text-sm notranslate"
+            translate="no"
           />
           <span className="text-dark-600 font-semibold text-sm">m</span>
         </div>
@@ -431,7 +460,7 @@ export default function ProductOrderForm({
       )}
 
       {/* Quantity Selector */}
-      <div className="p-4 bg-white border border-dark-100 rounded-lg">
+      <div className="p-4 bg-white border border-dark-100 rounded-lg notranslate" translate="no">
         <label className="block text-sm font-semibold text-dark-800 mb-2">
           Cantitate (unități)
         </label>
@@ -447,7 +476,8 @@ export default function ProductOrderForm({
             type="number"
             value={quantity}
             onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-20 px-3 py-2 border border-dark-200 rounded-lg text-center font-semibold"
+            className="w-20 px-3 py-2 border border-dark-200 rounded-lg text-center font-semibold notranslate"
+            translate="no"
             min="1"
           />
           <button
@@ -468,7 +498,10 @@ export default function ProductOrderForm({
           </div>
           <div className="flex justify-between items-center">
             <span className="text-dark-700">Preț/buc:</span>
-            <span className="font-semibold text-dark-900">{currentPrice.toFixed(2)} RON</span>
+            <div className="text-right">
+              <span className="font-semibold text-dark-900">{currentPrice.toFixed(2)} RON</span>
+              <span className="text-xs text-dark-500 ml-1">(~{formatEur(ronToEur(currentPrice, eurRate))} €)</span>
+            </div>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-dark-700">Buc. necesare:</span>
@@ -477,11 +510,17 @@ export default function ProductOrderForm({
           <div className="border-t border-primary-300 pt-2">
             <div className="flex justify-between items-center">
               <span className="font-bold text-dark-900">TOTAL:</span>
-              <span className="text-2xl font-bold text-primary-600">{totalPrice.toFixed(2)} RON</span>
+              <div className="text-right">
+                <span className="text-2xl font-bold text-primary-600">{totalPrice.toFixed(2)} RON</span>
+              </div>
             </div>
-            <p className="text-xs text-dark-500 mt-1">
-              ({lengthNum}m × {quantity} × {bucinPerMetru} = {piecesNeeded} buc)
-            </p>
+            <div className="flex justify-between items-center mt-1">
+              <span className="text-xs text-dark-500">
+                ({lengthNum}m × {quantity} × {bucinPerMetru} = {piecesNeeded} buc)
+              </span>
+              <span className="text-sm font-semibold text-dark-600">~{formatEur(ronToEur(totalPrice, eurRate))} EUR</span>
+            </div>
+            <p className="text-xs text-dark-400 mt-1 text-right">curs BNR: 1 EUR = {eurRate.toFixed(4)} RON</p>
           </div>
         </div>
       </div>

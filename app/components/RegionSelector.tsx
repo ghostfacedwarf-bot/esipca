@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { ChevronDown } from 'lucide-react'
-import { useRegion, Region } from '@/lib/region-context'
+import { useRegionStore, Region } from '@/lib/store'
 
 // Romania flag component
 function RomaniaFlag({ className = '' }: { className?: string }) {
@@ -43,7 +43,7 @@ const regions: { code: Region; label: string; Flag: React.FC<{ className?: strin
 ]
 
 export default function RegionSelector() {
-  const { region, setRegion, isLoading } = useRegion()
+  const { region, setRegion, isLoading } = useRegionStore()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 

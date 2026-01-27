@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, CheckCircle, Zap, Shield, Users } from 'lucide-react'
 import HeroSlider from './components/HeroSlider'
+import FeaturedProductCard from './components/FeaturedProductCard'
 import { getFeaturedProducts } from '@/lib/db'
 
 // Static metadata
@@ -110,39 +111,7 @@ export default async function Home() {
 
           <div className="grid md:grid-cols-3 gap-8">
             {recommendedProducts.map((product) => (
-              <Link key={product.id} href={`/produse/${product.slug}`}>
-                <div className="card card-hover overflow-hidden h-full flex flex-col">
-                  {/* Product Image */}
-                  <div className="aspect-square bg-gradient-to-br from-primary-100 to-dark-100 flex items-center justify-center text-6xl overflow-hidden relative">
-                    {product.media && product.media.length > 0 ? (
-                      <Image
-                        src={product.media[0].url}
-                        alt={product.media[0].alt || product.name}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                      />
-                    ) : (
-                      <span>📦</span>
-                    )}
-                  </div>
-                  <div className="p-6 flex flex-col flex-1">
-                    <h3 className="text-lg font-bold mb-2 line-clamp-2">{product.name}</h3>
-                    <p className="text-dark-600 text-sm mb-4 flex-1 line-clamp-2">{product.shortDescription}</p>
-                    <div className="flex items-center justify-between pt-4 border-t border-dark-200">
-                      <div>
-                        <p className="text-2xl font-bold text-primary-600">{product.priceFrom} RON</p>
-                        <p className="text-xs text-dark-500">
-                          {product.priceType === 'per_meter' ? 'per metru' : 'per bucată'}
-                        </p>
-                      </div>
-                      <button className="btn btn-primary btn-sm">
-                        Detalii
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </Link>
+              <FeaturedProductCard key={product.id} product={product} />
             ))}
           </div>
 

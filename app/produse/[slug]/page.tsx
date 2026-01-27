@@ -75,23 +75,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               </div>
             )}
 
-            {/* Price */}
-            <div className="mb-4 p-4 bg-primary-50 rounded-lg">
-              <p className="text-dark-600 text-sm mb-2">Preț de bază</p>
-              <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-bold text-primary-600">
-                  {product.priceFrom}
-                </span>
-                <span className="text-xl text-dark-700">
-                  RON/{product.priceType === 'per_meter' ? 'metru' : 'bucată'}
-                </span>
-              </div>
-              {product.longDescription && (
-                <p className="text-dark-600 text-sm mt-2">
-                  Preț pentru informații suplimentare contactează-ne
-                </p>
-              )}
-            </div>
+            {/* Price - moved to ProductOrderForm for regional pricing */}
 
             {/* Description */}
             {product.shortDescription && (

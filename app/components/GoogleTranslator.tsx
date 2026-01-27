@@ -385,7 +385,7 @@ export default function GoogleTranslator() {
             aria-label="Traducere"
           >
             <Languages size={20} />
-            <span className="translate-btn-text">Traducere</span>
+            <span className="translate-btn-text notranslate" translate="no">Translate</span>
           </button>
         )}
 
