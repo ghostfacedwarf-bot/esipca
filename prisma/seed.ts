@@ -3,9 +3,9 @@ const bcryptjs = require('bcryptjs')
 
 const prisma = new PrismaClient()
 
-// Calculate EU price: RO price + 20%
+// Calculate EU price: RO price x 2 (dublu)
 function calculateEUPrice(roPrice: number): number {
-  return Math.round(roPrice * 1.20 * 100) / 100
+  return Math.round(roPrice * 2 * 100) / 100
 }
 
 async function main() {
