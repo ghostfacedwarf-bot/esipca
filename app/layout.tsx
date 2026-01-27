@@ -3,6 +3,7 @@ import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import GoogleTranslator from '@/components/GoogleTranslator'
+import RegionAutoDetect from '@/components/RegionAutoDetect'
 import { Toaster } from 'react-hot-toast'
 import { initializeDatabase } from '@/lib/init-db-auto'
 import { RegionProvider } from '@/lib/region-context'
@@ -106,6 +107,7 @@ export default function RootLayout({
       </head>
       <body>
         <RegionProvider>
+          <RegionAutoDetect />
           <Header />
           <main className="min-h-screen">
             {children}
