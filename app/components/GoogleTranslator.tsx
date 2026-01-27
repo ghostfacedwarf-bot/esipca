@@ -3,19 +3,116 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Globe, X, Languages, Check } from 'lucide-react'
 
-const languages = [
-  { code: 'ro', name: 'Română', flag: '🇷🇴' },
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
-  { code: 'hu', name: 'Magyar', flag: '🇭🇺' },
-  { code: 'pl', name: 'Polski', flag: '🇵🇱' },
-  { code: 'bg', name: 'Български', flag: '🇧🇬' },
-  { code: 'nl', name: 'Nederlands', flag: '🇳🇱' },
-  { code: 'pt', name: 'Português', flag: '🇵🇹' },
-  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+// Flag SVG Components
+const FlagRO = ({ className = '' }: { className?: string }) => (
+  <svg viewBox="0 0 30 20" className={className}>
+    <rect x="0" y="0" width="10" height="20" fill="#002B7F" />
+    <rect x="10" y="0" width="10" height="20" fill="#FCD116" />
+    <rect x="20" y="0" width="10" height="20" fill="#CE1126" />
+  </svg>
+)
+
+const FlagGB = ({ className = '' }: { className?: string }) => (
+  <svg viewBox="0 0 30 20" className={className}>
+    <rect width="30" height="20" fill="#012169" />
+    <path d="M0,0 L30,20 M30,0 L0,20" stroke="#fff" strokeWidth="4" />
+    <path d="M0,0 L30,20 M30,0 L0,20" stroke="#C8102E" strokeWidth="2" />
+    <path d="M15,0 V20 M0,10 H30" stroke="#fff" strokeWidth="6" />
+    <path d="M15,0 V20 M0,10 H30" stroke="#C8102E" strokeWidth="4" />
+  </svg>
+)
+
+const FlagDE = ({ className = '' }: { className?: string }) => (
+  <svg viewBox="0 0 30 20" className={className}>
+    <rect y="0" width="30" height="6.67" fill="#000" />
+    <rect y="6.67" width="30" height="6.67" fill="#DD0000" />
+    <rect y="13.33" width="30" height="6.67" fill="#FFCC00" />
+  </svg>
+)
+
+const FlagFR = ({ className = '' }: { className?: string }) => (
+  <svg viewBox="0 0 30 20" className={className}>
+    <rect x="0" width="10" height="20" fill="#002395" />
+    <rect x="10" width="10" height="20" fill="#fff" />
+    <rect x="20" width="10" height="20" fill="#ED2939" />
+  </svg>
+)
+
+const FlagES = ({ className = '' }: { className?: string }) => (
+  <svg viewBox="0 0 30 20" className={className}>
+    <rect width="30" height="20" fill="#AA151B" />
+    <rect y="5" width="30" height="10" fill="#F1BF00" />
+  </svg>
+)
+
+const FlagIT = ({ className = '' }: { className?: string }) => (
+  <svg viewBox="0 0 30 20" className={className}>
+    <rect x="0" width="10" height="20" fill="#009246" />
+    <rect x="10" width="10" height="20" fill="#fff" />
+    <rect x="20" width="10" height="20" fill="#CE2B37" />
+  </svg>
+)
+
+const FlagHU = ({ className = '' }: { className?: string }) => (
+  <svg viewBox="0 0 30 20" className={className}>
+    <rect y="0" width="30" height="6.67" fill="#CE2939" />
+    <rect y="6.67" width="30" height="6.67" fill="#fff" />
+    <rect y="13.33" width="30" height="6.67" fill="#477050" />
+  </svg>
+)
+
+const FlagPL = ({ className = '' }: { className?: string }) => (
+  <svg viewBox="0 0 30 20" className={className}>
+    <rect y="0" width="30" height="10" fill="#fff" />
+    <rect y="10" width="30" height="10" fill="#DC143C" />
+  </svg>
+)
+
+const FlagBG = ({ className = '' }: { className?: string }) => (
+  <svg viewBox="0 0 30 20" className={className}>
+    <rect y="0" width="30" height="6.67" fill="#fff" />
+    <rect y="6.67" width="30" height="6.67" fill="#00966E" />
+    <rect y="13.33" width="30" height="6.67" fill="#D62612" />
+  </svg>
+)
+
+const FlagNL = ({ className = '' }: { className?: string }) => (
+  <svg viewBox="0 0 30 20" className={className}>
+    <rect y="0" width="30" height="6.67" fill="#AE1C28" />
+    <rect y="6.67" width="30" height="6.67" fill="#fff" />
+    <rect y="13.33" width="30" height="6.67" fill="#21468B" />
+  </svg>
+)
+
+const FlagPT = ({ className = '' }: { className?: string }) => (
+  <svg viewBox="0 0 30 20" className={className}>
+    <rect width="12" height="20" fill="#006600" />
+    <rect x="12" width="18" height="20" fill="#FF0000" />
+    <circle cx="12" cy="10" r="4" fill="#FFCC00" />
+  </svg>
+)
+
+const FlagRU = ({ className = '' }: { className?: string }) => (
+  <svg viewBox="0 0 30 20" className={className}>
+    <rect y="0" width="30" height="6.67" fill="#fff" />
+    <rect y="6.67" width="30" height="6.67" fill="#0039A6" />
+    <rect y="13.33" width="30" height="6.67" fill="#D52B1E" />
+  </svg>
+)
+
+const languages: { code: string; name: string; Flag: React.FC<{ className?: string }> }[] = [
+  { code: 'ro', name: 'Română', Flag: FlagRO },
+  { code: 'en', name: 'English', Flag: FlagGB },
+  { code: 'de', name: 'Deutsch', Flag: FlagDE },
+  { code: 'fr', name: 'Français', Flag: FlagFR },
+  { code: 'es', name: 'Español', Flag: FlagES },
+  { code: 'it', name: 'Italiano', Flag: FlagIT },
+  { code: 'hu', name: 'Magyar', Flag: FlagHU },
+  { code: 'pl', name: 'Polski', Flag: FlagPL },
+  { code: 'bg', name: 'Български', Flag: FlagBG },
+  { code: 'nl', name: 'Nederlands', Flag: FlagNL },
+  { code: 'pt', name: 'Português', Flag: FlagPT },
+  { code: 'ru', name: 'Русский', Flag: FlagRU },
 ]
 
 export default function GoogleTranslator() {
@@ -217,8 +314,12 @@ export default function GoogleTranslator() {
           color: white;
         }
 
-        .translate-item .flag {
-          font-size: 22px;
+        .translate-item .flag-icon {
+          width: 28px;
+          height: 20px;
+          border-radius: 3px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+          flex-shrink: 0;
         }
 
         .translate-item .name {
@@ -278,6 +379,8 @@ export default function GoogleTranslator() {
         {!isOpen && (
           <button
             id="translate-toggle-btn"
+            className="notranslate"
+            translate="no"
             onClick={() => setIsOpen(true)}
             aria-label="Traducere"
           >
@@ -287,26 +390,26 @@ export default function GoogleTranslator() {
         )}
 
         {isOpen && (
-          <div id="translate-popup">
-            <div className="translate-popup-header">
+          <div id="translate-popup" className="notranslate" translate="no">
+            <div className="translate-popup-header notranslate" translate="no">
               <Globe size={18} />
-              <span>Selectează Limba</span>
+              <span>Selecteaza Limba</span>
               <button
                 className="translate-close"
                 onClick={() => setIsOpen(false)}
-                aria-label="Închide"
+                aria-label="Inchide"
               >
                 <X size={14} />
               </button>
             </div>
-            <div className="translate-list">
+            <div className="translate-list notranslate" translate="no">
               {languages.map((lang) => (
                 <button
                   key={lang.code}
                   className={`translate-item ${currentLang === lang.code ? 'active' : ''}`}
                   onClick={() => selectLanguage(lang.code)}
                 >
-                  <span className="flag">{lang.flag}</span>
+                  <lang.Flag className="flag-icon" />
                   <span className="name">{lang.name}</span>
                   <Check size={18} className="check" />
                 </button>

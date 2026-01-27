@@ -52,9 +52,9 @@ export async function getProductBySlug(slug: string) {
       const product = productResult.rows[0]
       if (!product) return null
 
-      // Get variants
+      // Get variants (including priceEU)
       const variantsResult = await pool.query(
-        `SELECT * FROM "Variant" WHERE "productId" = $1`,
+        `SELECT id, "productId", sku, attributes, price, "priceEU", "stockStatus", "stockQty", "createdAt", "updatedAt" FROM "Variant" WHERE "productId" = $1`,
         [product.id]
       )
 
@@ -104,7 +104,7 @@ export async function getProductBySlug(slug: string) {
       }
 
       const [variants] = await connection.execute(
-        `SELECT * FROM Variant WHERE productId = ?`,
+        `SELECT id, productId, sku, attributes, price, priceEU, stockStatus, stockQty, createdAt, updatedAt FROM Variant WHERE productId = ?`,
         [product.id]
       )
 

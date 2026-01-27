@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/store'
+import { useRegion } from '@/lib/region-context'
 import { Trash2, ArrowLeft, ShoppingCart } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'react-hot-toast'
@@ -18,7 +19,8 @@ interface CustomerData {
 
 export default function CartPage() {
   const router = useRouter()
-  const { items, removeItem, updateQuantity, clearCart, getTotalPrice, getTotalItems } = useCart()
+  const { items, removeItem, updateQuantity, clearCart, getTotalPrice, getTotalItems, recalculatePrices } = useCart()
+  const { region } = useRegion()
   const [isLoading, setIsLoading] = useState(true)
   const [orderPlaced, setOrderPlaced] = useState(false)
   const [customerData, setCustomerData] = useState<CustomerData>({
@@ -34,6 +36,13 @@ export default function CartPage() {
   useEffect(() => {
     setIsLoading(false)
   }, [])
+
+  // Recalculate prices when region changes
+  useEffect(() => {
+    if (items.length > 0) {
+      recalculatePrices(region)
+    }
+  }, [region])
 
   const validateForm = () => {
     const newErrors: Partial<CustomerData> = {}
@@ -333,6 +342,12 @@ export default function CartPage() {
                 <h2 className="text-lg font-bold text-dark-900 mb-4">Rezumat Comandă</h2>
 
                 <div className="space-y-3 mb-6 pb-6 border-b border-primary-200">
+                  <div className="flex justify-between text-dark-600 text-sm">
+                    <span>Preturi pentru:</span>
+                    <span className="font-medium">
+                      {region === 'EU' ? '🇪🇺 Europa' : '🇷🇴 Romania'}
+                    </span>
+                  </div>
                   <div className="flex justify-between text-dark-700">
                     <span>Articole ({getTotalItems()}):</span>
                     <span className="font-semibold">

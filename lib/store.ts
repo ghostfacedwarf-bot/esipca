@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+export type Region = 'RO' | 'EU'
+
 export interface CartItem {
   id: string
   productId: string
@@ -8,9 +10,12 @@ export interface CartItem {
   productName: string
   sku: string
   attributes: Record<string, any>
-  price: number
+  price: number         // Current active price (based on region)
+  priceRO: number       // Romania price
+  priceEU: number | null // EU price (null = use RO price)
   quantity: number
   priceType: string
+  region: Region        // Region when item was added
 }
 
 interface CartStore {
@@ -21,6 +26,7 @@ interface CartStore {
   clearCart: () => void
   getTotalPrice: () => number
   getTotalItems: () => number
+  recalculatePrices: (region: Region) => void
 }
 
 export const useCart = create<CartStore>()(
@@ -69,6 +75,15 @@ export const useCart = create<CartStore>()(
       },
       getTotalItems: () => {
         return get().items.reduce((total, item) => total + item.quantity, 0)
+      },
+      recalculatePrices: (region: Region) => {
+        set((state) => ({
+          items: state.items.map((item) => ({
+            ...item,
+            price: region === 'EU' && item.priceEU != null ? item.priceEU : item.priceRO,
+            region,
+          })),
+        }))
       },
     }),
     {

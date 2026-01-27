@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ShoppingCart, Menu, X, Phone, MapPin } from 'lucide-react'
 import { useCart } from '@/lib/store'
+import RegionSelector from './RegionSelector'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -28,9 +29,14 @@ export default function Header() {
               office@exprestrading.com
             </a>
           </div>
-          <div className="flex items-center gap-2 text-accent-400">
-            <MapPin size={16} />
-            Galati, DN26 Nr 19
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-accent-400">
+              <MapPin size={16} />
+              Galati, DN26 Nr 19
+            </div>
+            <div className="border-l border-dark-600 pl-4">
+              <RegionSelector />
+            </div>
           </div>
         </div>
       </div>
@@ -67,7 +73,12 @@ export default function Header() {
           </div>
 
           {/* Right side icons */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* Mobile Region Selector */}
+            <div className="md:hidden">
+              <RegionSelector />
+            </div>
+
             <Link href="/cos" className="relative p-2 hover:bg-dark-100 rounded-lg transition-colors">
               <ShoppingCart size={24} className="text-dark-700" />
               <span className="absolute top-1 right-1 bg-primary-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">

@@ -3,6 +3,11 @@ const bcryptjs = require('bcryptjs')
 
 const prisma = new PrismaClient()
 
+// Calculate EU price: RO price + 20%
+function calculateEUPrice(roPrice: number): number {
+  return Math.round(roPrice * 1.20 * 100) / 100
+}
+
 async function main() {
   console.log('🌱 Starting database seed with COMPLETE product data...')
 
@@ -618,7 +623,7 @@ Caracteristici:
   console.log(`✓ Products created (${products.length} total)`)
 
   // ========== CREATE VARIANTS ==========
-  // Sipca variants with height options
+  // Sipca variants with height options (including EU prices)
   const sipcaVariants = await Promise.all(
     sipcaProducts.map((product) =>
       prisma.variant.create({
@@ -630,6 +635,7 @@ Caracteristici:
             lungime: '1 metru liniar',
           },
           price: product.priceFrom,
+          priceEU: calculateEUPrice(product.priceFrom),
           stockStatus: 'in_stock',
           stockQty: 9999,
         },
@@ -637,7 +643,7 @@ Caracteristici:
     )
   )
 
-  // Tabla variants with color options
+  // Tabla variants with color options (including EU prices)
   const tableVariants = await Promise.all([
     // 0.14mm
     prisma.variant.create({
@@ -649,6 +655,7 @@ Caracteristici:
           grosime: '0.14 mm',
         },
         price: 18.50,
+        priceEU: calculateEUPrice(18.50),
         stockStatus: 'in_stock',
         stockQty: 500,
       },
@@ -662,6 +669,7 @@ Caracteristici:
           grosime: '0.14 mm',
         },
         price: 20.30,
+        priceEU: calculateEUPrice(20.30),
         stockStatus: 'in_stock',
         stockQty: 300,
       },
@@ -675,6 +683,7 @@ Caracteristici:
           grosime: '0.14 mm',
         },
         price: 20.30,
+        priceEU: calculateEUPrice(20.30),
         stockStatus: 'in_stock',
         stockQty: 250,
       },
@@ -689,6 +698,7 @@ Caracteristici:
           grosime: '0.15 mm',
         },
         price: 21.32,
+        priceEU: calculateEUPrice(21.32),
         stockStatus: 'in_stock',
         stockQty: 200,
       },
@@ -702,6 +712,7 @@ Caracteristici:
           grosime: '0.15 mm',
         },
         price: 21.32,
+        priceEU: calculateEUPrice(21.32),
         stockStatus: 'in_stock',
         stockQty: 180,
       },
@@ -716,6 +727,7 @@ Caracteristici:
           grosime: '0.20 mm',
         },
         price: 30.45,
+        priceEU: calculateEUPrice(30.45),
         stockStatus: 'in_stock',
         stockQty: 600,
       },
@@ -729,6 +741,7 @@ Caracteristici:
           grosime: '0.20 mm',
         },
         price: 30.45,
+        priceEU: calculateEUPrice(30.45),
         stockStatus: 'in_stock',
         stockQty: 500,
       },
@@ -742,6 +755,7 @@ Caracteristici:
           grosime: '0.20 mm',
         },
         price: 30.45,
+        priceEU: calculateEUPrice(30.45),
         stockStatus: 'in_stock',
         stockQty: 450,
       },
@@ -756,6 +770,7 @@ Caracteristici:
           grosime: '0.25 mm',
         },
         price: 34.51,
+        priceEU: calculateEUPrice(34.51),
         stockStatus: 'in_stock',
         stockQty: 300,
       },
@@ -769,6 +784,7 @@ Caracteristici:
           grosime: '0.25 mm',
         },
         price: 32.48,
+        priceEU: calculateEUPrice(32.48),
         stockStatus: 'in_stock',
         stockQty: 250,
       },
@@ -783,6 +799,7 @@ Caracteristici:
           grosime: '0.30 mm',
         },
         price: 41.62,
+        priceEU: calculateEUPrice(41.62),
         stockStatus: 'in_stock',
         stockQty: 200,
       },
@@ -796,6 +813,7 @@ Caracteristici:
           grosime: '0.30 mm',
         },
         price: 39.59,
+        priceEU: calculateEUPrice(39.59),
         stockStatus: 'in_stock',
         stockQty: 180,
       },
@@ -810,6 +828,7 @@ Caracteristici:
           grosime: '0.35 mm',
         },
         price: 46.69,
+        priceEU: calculateEUPrice(46.69),
         stockStatus: 'in_stock',
         stockQty: 120,
       },
@@ -823,6 +842,7 @@ Caracteristici:
           grosime: '0.35 mm',
         },
         price: 41.62,
+        priceEU: calculateEUPrice(41.62),
         stockStatus: 'in_stock',
         stockQty: 100,
       },
@@ -837,6 +857,7 @@ Caracteristici:
           grosime: '0.40 mm',
         },
         price: 49.74,
+        priceEU: calculateEUPrice(49.74),
         stockStatus: 'in_stock',
         stockQty: 80,
       },

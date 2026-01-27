@@ -5,6 +5,7 @@ import Footer from '@/components/Footer'
 import GoogleTranslator from '@/components/GoogleTranslator'
 import { Toaster } from 'react-hot-toast'
 import { initializeDatabase } from '@/lib/init-db-auto'
+import { RegionProvider } from '@/lib/region-context'
 
 // Initialize database on server startup
 initializeDatabase().catch(err => console.error('[Layout] DB init error:', err))
@@ -104,13 +105,15 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Header />
-        <main className="min-h-screen">
-          {children}
-        </main>
-        <Footer />
-        <Toaster position="bottom-right" />
-        <GoogleTranslator />
+        <RegionProvider>
+          <Header />
+          <main className="min-h-screen">
+            {children}
+          </main>
+          <Footer />
+          <Toaster position="bottom-right" />
+          <GoogleTranslator />
+        </RegionProvider>
       </body>
     </html>
   )

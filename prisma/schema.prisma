@@ -79,7 +79,8 @@ model Variant {
   // Variant attributes: color, thickness, length, finish, etc.
   attributes  Json       // {color: "red", thickness: "0.5mm", length: "1m", finish: "matte"}
 
-  price       Float      // Price for this variant
+  price       Float      // Price for Romania
+  priceEU     Float?     // Price for EU (null = use price)
   stockStatus String     @default("in_stock") // in_stock, preorder, out_of_stock
   stockQty    Int        @default(9999)
 

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ShoppingCart, Share2, AlertCircle } from 'lucide-react'
 import { useCart, CartItem } from '@/lib/store'
+import { useRegion, getRegionalPrice } from '@/lib/region-context'
 import { toast } from 'react-hot-toast'
 
 interface Variant {
@@ -10,6 +11,7 @@ interface Variant {
   sku: string
   attributes: Record<string, any>
   price: number
+  priceEU: number | null
   stockStatus: string
   stockQty: number
 }
@@ -52,6 +54,13 @@ export default function ProductOrderForm({
   const [length, setLength] = useState('1.0') // Lungime în metri (1.0m default)
   const [isLoading, setIsLoading] = useState(false)
   const { addItem } = useCart()
+  const { region } = useRegion()
+
+  // Get regional price for a variant
+  const getVariantPrice = (variant: Variant | null): number => {
+    if (!variant) return priceFrom
+    return getRegionalPrice(variant.price, variant.priceEU, region)
+  }
 
   // Find matching variant based on height and paint option
   const findMatchingVariant = (height: string, paintOpt: string) => {
@@ -84,8 +93,9 @@ export default function ProductOrderForm({
   const lengthNum = parseFloat(length)
   const piecesNeeded = Math.ceil(lengthNum * bucinPerMetru * quantity)
 
-  // Calculate total price: price per piece × pieces needed
-  const totalPrice = (selectedVariant?.price || priceFrom) * piecesNeeded
+  // Calculate total price: price per piece × pieces needed (using regional price)
+  const currentPrice = getVariantPrice(selectedVariant)
+  const totalPrice = currentPrice * piecesNeeded
 
   // Group variants by attributes for better UX
   const getUniqueAttributeValues = (attributeKey: string) => {
@@ -117,8 +127,9 @@ export default function ProductOrderForm({
     setIsLoading(true)
     try {
       const paintLabel = getPaintOptionPriceAdd(selectedPaintOption) ? ` - ${selectedPaintOption}` : ''
+      const regionalPrice = getVariantPrice(selectedVariant)
       const cartItem: CartItem = {
-        id: `${productId}-${selectedVariant.id}`,
+        id: `${productId}-${selectedVariant.id}-${region}`,
         productId,
         variantId: selectedVariant.id,
         productName,
@@ -128,9 +139,12 @@ export default function ProductOrderForm({
           inaltime: selectedHeight,
           optiune_vopsea: selectedPaintOption
         },
-        price: selectedVariant.price,
+        price: regionalPrice,
+        priceRO: selectedVariant.price,
+        priceEU: selectedVariant.priceEU,
         quantity,
         priceType,
+        region,
       }
 
       addItem(cartItem)
@@ -398,9 +412,9 @@ export default function ProductOrderForm({
               </p>
             </div>
             <div>
-              <p className="text-dark-600 text-xs mb-1">Preț/buc</p>
+              <p className="text-dark-600 text-xs mb-1">Preț/buc ({region === 'EU' ? 'Europa' : 'Romania'})</p>
               <p className="font-bold text-primary-600">
-                {selectedVariant.price} RON
+                {currentPrice.toFixed(2)} RON
               </p>
             </div>
             <div>
@@ -448,9 +462,13 @@ export default function ProductOrderForm({
       {/* Total Price Summary */}
       <div className="p-4 bg-gradient-to-br from-primary-50 to-primary-100 border border-primary-200 rounded-lg">
         <div className="space-y-2 text-sm">
+          <div className="flex justify-between items-center text-xs text-dark-500">
+            <span>Preturi pentru:</span>
+            <span className="font-medium">{region === 'EU' ? '🇪🇺 Europa' : '🇷🇴 Romania'}</span>
+          </div>
           <div className="flex justify-between items-center">
             <span className="text-dark-700">Preț/buc:</span>
-            <span className="font-semibold text-dark-900">{selectedVariant?.price || priceFrom} RON</span>
+            <span className="font-semibold text-dark-900">{currentPrice.toFixed(2)} RON</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-dark-700">Buc. necesare:</span>
