@@ -115,6 +115,9 @@ const languages: { code: string; name: string; Flag: React.FC<{ className?: stri
   { code: 'ru', name: 'Русский', Flag: FlagRU },
 ]
 
+const LANGUAGE_DETECTED_KEY = 'esipca_language_detected'
+const LANGUAGE_PREFERENCE_KEY = 'esipca_language'
+
 export default function GoogleTranslator() {
   const [isOpen, setIsOpen] = useState(false)
   const [currentLang, setCurrentLang] = useState('ro')
@@ -157,6 +160,59 @@ export default function GoogleTranslator() {
     }
   }, [])
 
+  // Auto-detect language based on geo IP
+  useEffect(() => {
+    if (!isLoaded) return
+
+    const autoDetectLanguage = async () => {
+      // Check if we already detected/set language before
+      const alreadyDetected = localStorage.getItem(LANGUAGE_DETECTED_KEY)
+      const savedLanguage = localStorage.getItem(LANGUAGE_PREFERENCE_KEY)
+
+      if (alreadyDetected && savedLanguage) {
+        // Apply saved language preference
+        if (savedLanguage !== 'ro') {
+          const select = document.querySelector('.goog-te-combo') as HTMLSelectElement
+          if (select) {
+            select.value = savedLanguage
+            select.dispatchEvent(new Event('change', { bubbles: true }))
+            setCurrentLang(savedLanguage)
+          }
+        }
+        return
+      }
+
+      try {
+        const response = await fetch('/api/geo')
+        if (response.ok) {
+          const data = await response.json()
+          console.log('[GoogleTranslator] Auto-detected language:', data.language, 'for country:', data.countryCode)
+
+          // Mark as detected so we don't override user's manual selection
+          localStorage.setItem(LANGUAGE_DETECTED_KEY, 'true')
+          localStorage.setItem(LANGUAGE_PREFERENCE_KEY, data.language)
+
+          // Apply the detected language if it's not Romanian
+          if (data.language && data.language !== 'ro') {
+            // Small delay to ensure Google Translate is fully loaded
+            setTimeout(() => {
+              const select = document.querySelector('.goog-te-combo') as HTMLSelectElement
+              if (select) {
+                select.value = data.language
+                select.dispatchEvent(new Event('change', { bubbles: true }))
+                setCurrentLang(data.language)
+              }
+            }, 500)
+          }
+        }
+      } catch (error) {
+        console.error('[GoogleTranslator] Error auto-detecting language:', error)
+      }
+    }
+
+    autoDetectLanguage()
+  }, [isLoaded])
+
   // Handle language selection
   const selectLanguage = useCallback((langCode: string) => {
     // Find the Google Translate select element
@@ -165,6 +221,9 @@ export default function GoogleTranslator() {
       select.value = langCode
       select.dispatchEvent(new Event('change', { bubbles: true }))
       setCurrentLang(langCode)
+      // Save user's manual preference
+      localStorage.setItem(LANGUAGE_DETECTED_KEY, 'true')
+      localStorage.setItem(LANGUAGE_PREFERENCE_KEY, langCode)
     }
     setIsOpen(false)
   }, [])

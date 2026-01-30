@@ -71,6 +71,62 @@ interface CartStore {
   recalculatePrices: (region: Region) => void
 }
 
+// ============ COMPARATOR STORE ============
+
+export interface CompareProduct {
+  id: string
+  slug: string
+  name: string
+  priceFrom: number
+  priceType: string
+  specs: Record<string, any> | null
+  category?: { name: string }
+  media?: { url: string }[]
+}
+
+interface ComparatorStore {
+  products: CompareProduct[]
+  addProduct: (product: CompareProduct) => boolean
+  removeProduct: (productId: string) => void
+  clearAll: () => void
+  isInComparison: (productId: string) => boolean
+  canAdd: () => boolean
+}
+
+export const useComparator = create<ComparatorStore>()(
+  persist(
+    (set, get) => ({
+      products: [],
+      addProduct: (product) => {
+        const state = get()
+        if (state.products.length >= 2) return false
+        if (state.products.some(p => p.id === product.id)) return false
+        set({ products: [...state.products, product] })
+        return true
+      },
+      removeProduct: (productId) => {
+        set((state) => ({
+          products: state.products.filter(p => p.id !== productId)
+        }))
+      },
+      clearAll: () => {
+        set({ products: [] })
+      },
+      isInComparison: (productId) => {
+        return get().products.some(p => p.id === productId)
+      },
+      canAdd: () => {
+        return get().products.length < 2
+      }
+    }),
+    {
+      name: 'product-comparator',
+    }
+  )
+)
+
+// ============ CART STORE ============
+
 export const useCart = create<CartStore>()(
   persist(
     (set, get) => ({

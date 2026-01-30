@@ -1,9 +1,11 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
-import { useRegionStore } from '@/lib/store'
+import { ArrowRight, GitCompare, Check } from 'lucide-react'
+import { useRegionStore, useComparator, CompareProduct } from '@/lib/store'
 import { useExchangeRate, ronToEur, formatEur } from '@/lib/useExchangeRate'
+import toast from 'react-hot-toast'
 
 interface ProductCardProps {
   product: {
@@ -12,17 +14,54 @@ interface ProductCardProps {
     name: string
     priceFrom: number
     priceType: string
+    specs?: Record<string, any> | null
     category?: { name: string }
     media?: { url: string }[]
   }
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const [mounted, setMounted] = useState(false)
   const region = useRegionStore((state) => state.region)
   const { rate: eurRate } = useExchangeRate()
+  const { addProduct, removeProduct, isInComparison, canAdd } = useComparator()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Calculate regional price (EU = double)
   const regionalPrice = region === 'EU' ? product.priceFrom * 2 : product.priceFrom
+
+  // Only check comparison status after mount to avoid hydration mismatch
+  const inComparison = mounted && isInComparison(product.id)
+
+  const handleCompareClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (inComparison) {
+      removeProduct(product.id)
+      toast.success(`${product.name} eliminat din comparație`)
+    } else if (canAdd()) {
+      const compareProduct: CompareProduct = {
+        id: product.id,
+        slug: product.slug,
+        name: product.name,
+        priceFrom: product.priceFrom,
+        priceType: product.priceType,
+        specs: product.specs || null,
+        category: product.category,
+        media: product.media,
+      }
+      const added = addProduct(compareProduct)
+      if (added) {
+        toast.success(`${product.name} adăugat pentru comparație`)
+      }
+    } else {
+      toast.error('Poți compara maxim 2 produse')
+    }
+  }
 
   return (
     <Link href={`/produse/${product.slug}`}>
@@ -41,6 +80,20 @@ export default function ProductCard({ product }: ProductCardProps) {
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-colors" />
             </>
           )}
+
+          {/* Compare button overlay */}
+          <button
+            onClick={handleCompareClick}
+            className={`absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full shadow-md transition-all text-xs font-medium ${
+              inComparison
+                ? 'bg-primary-500 text-white'
+                : 'bg-white/95 text-dark-700 hover:bg-primary-500 hover:text-white'
+            }`}
+            title={inComparison ? 'Elimină din comparație' : 'Adaugă pentru comparație'}
+          >
+            {inComparison ? <Check size={14} /> : <GitCompare size={14} />}
+            <span className="hidden sm:inline">{inComparison ? 'Comparat' : 'Compară'}</span>
+          </button>
         </div>
 
         {/* Product info */}
