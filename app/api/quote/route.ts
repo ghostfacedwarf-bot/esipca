@@ -1,33 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { rateLimit, getClientIp, RATE_LIMITS } from '@/lib/rate-limit'
 
 const quoteSchema = z.object({
-  productId: z.string(),
-  productName: z.string(),
-  variantId: z.string(),
-  sku: z.string(),
-  quantity: z.number().min(1),
-  price: z.number().min(0),
+  productId: z.string().max(100),
+  productName: z.string().max(255),
+  variantId: z.string().max(100),
+  sku: z.string().max(100),
+  quantity: z.number().int().min(1).max(100000),
+  price: z.number().min(0).max(1000000),
 })
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting - 5 requests per minute
+    const clientIp = getClientIp(request)
+    const rateLimitResult = rateLimit(`quote:${clientIp}`, RATE_LIMITS.quote)
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { success: false, error: 'Prea multe cereri. Încercați din nou mai târziu.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((rateLimitResult.reset - Date.now()) / 1000)),
+          },
+        }
+      )
+    }
+
     const body = await request.json()
-    const { productId, productName, variantId, sku, quantity, price } = quoteSchema.parse(body)
+    const validatedData = quoteSchema.safeParse(body)
+
+    if (!validatedData.success) {
+      return NextResponse.json(
+        { success: false, error: 'Datele introduse nu sunt valide' },
+        { status: 400 }
+      )
+    }
+
+    const { productName, quantity, price } = validatedData.data
+
+    // Log only non-sensitive summary
+    console.log(`[QUOTE] Request: ${productName} x${quantity} @ ${price} RON`)
 
     // TODO: Send email notification to admin
     // TODO: Store quote request in database
-    // For now, just log it
-    console.log('Quote Request:', {
-      timestamp: new Date().toISOString(),
-      productId,
-      productName,
-      variantId,
-      sku,
-      quantity,
-      price,
-      totalPrice: price * quantity,
-    })
 
     return NextResponse.json(
       {
@@ -37,23 +55,9 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     )
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Datele introduse nu sunt valide',
-          details: error.errors,
-        },
-        { status: 400 }
-      )
-    }
-
-    console.error('Quote API Error:', error)
+    console.error('[QUOTE] Error processing request')
     return NextResponse.json(
-      {
-        success: false,
-        error: 'Eroare la procesarea cererii',
-      },
+      { success: false, error: 'Eroare la procesarea cererii' },
       { status: 500 }
     )
   }

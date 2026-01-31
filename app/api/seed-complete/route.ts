@@ -104,10 +104,17 @@ const PRODUCT_IMAGES: Record<string, string> = {
 }
 
 export async function GET(request: NextRequest) {
+  // Security: Only allow with valid token from environment
   const token = request.nextUrl.searchParams.get('token')
+  const seedToken = process.env.SEED_COMPLETE_TOKEN
 
-  if (token !== 'seed-complete-2024') {
+  if (!seedToken || token !== seedToken) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Security: Only allow in development or with explicit production override
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_SEED_IN_PRODUCTION !== 'true') {
+    return NextResponse.json({ error: 'Seed disabled in production' }, { status: 403 })
   }
 
   let connection: mysql.Connection | null = null

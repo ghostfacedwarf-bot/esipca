@@ -1,20 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { rateLimit, getClientIp, RATE_LIMITS } from '@/lib/rate-limit'
+
+const translateSchema = z.object({
+  text: z.string().min(1).max(10000),
+  targetLang: z.string().min(2).max(5),
+})
 
 export async function POST(request: NextRequest) {
   try {
-    const { text, targetLang } = await request.json()
+    // Rate limiting - 100 requests per minute (more lenient for translations)
+    const clientIp = getClientIp(request)
+    const rateLimitResult = rateLimit(`translate:${clientIp}`, RATE_LIMITS.api)
 
-    if (!text || !targetLang) {
+    if (!rateLimitResult.success) {
       return NextResponse.json(
-        { error: 'Missing text or targetLang' },
+        { error: 'Too many requests' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((rateLimitResult.reset - Date.now()) / 1000)),
+          },
+        }
+      )
+    }
+
+    const body = await request.json()
+    const validatedData = translateSchema.safeParse(body)
+
+    if (!validatedData.success) {
+      return NextResponse.json(
+        { error: 'Invalid input' },
         { status: 400 }
       )
     }
 
+    const { text, targetLang } = validatedData.data
+
     const apiKey = process.env.DEEPL_API_KEY
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'DeepL API key not configured' },
+        { error: 'Translation service not configured' },
         { status: 500 }
       )
     }
@@ -38,8 +64,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (!response.ok) {
-      const error = await response.text()
-      console.error('DeepL API error:', error)
+      console.error('[TRANSLATE] DeepL API error:', response.status)
       return NextResponse.json(
         { error: 'Translation failed' },
         { status: response.status }
@@ -51,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ translatedText })
   } catch (error) {
-    console.error('Translation error:', error)
+    console.error('[TRANSLATE] Error')
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

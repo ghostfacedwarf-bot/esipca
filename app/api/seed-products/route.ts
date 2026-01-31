@@ -33,10 +33,17 @@ const ALL_PRODUCTS = [
 ]
 
 export async function GET(request: NextRequest) {
+  // Security: Only allow with valid token from environment
   const token = request.nextUrl.searchParams.get('token')
+  const seedToken = process.env.SEED_PRODUCTS_TOKEN
 
-  if (token !== 'add-all-products-2024') {
+  if (!seedToken || token !== seedToken) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Security: Only allow in development or with explicit production override
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_SEED_IN_PRODUCTION !== 'true') {
+    return NextResponse.json({ error: 'Seed disabled in production' }, { status: 403 })
   }
 
   try {

@@ -1,37 +1,34 @@
-import { NextResponse } from 'next/server'
-import { getAllProducts, getCategories } from '@/lib/db'
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET() {
-  const debug: any = {
+/**
+ * Debug endpoint - ONLY available in development mode
+ * Disabled in production for security
+ */
+export async function GET(request: NextRequest) {
+  // Security: Only allow in development
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      { error: 'Not found' },
+      { status: 404 }
+    )
+  }
+
+  // Require debug token even in development
+  const token = request.nextUrl.searchParams.get('token')
+  const debugToken = process.env.DEBUG_TOKEN
+
+  if (!debugToken || token !== debugToken) {
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    )
+  }
+
+  // Only return non-sensitive info
+  const debug = {
     timestamp: new Date().toISOString(),
-    databaseUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 30) + '...' : 'NOT SET',
-    detectedType: 'unknown',
-  }
-
-  // Detect database type
-  const url = process.env.DATABASE_URL || ''
-  if (url.startsWith('postgresql://') || url.startsWith('postgres://')) {
-    debug.detectedType = 'postgresql'
-  } else if (url.startsWith('mysql://')) {
-    debug.detectedType = 'mysql'
-  } else {
-    debug.detectedType = 'unknown (defaulting to mysql)'
-  }
-
-  try {
-    debug.categories = { status: 'fetching...' }
-    const categories = await getCategories()
-    debug.categories = { status: 'ok', count: categories.length }
-  } catch (error: any) {
-    debug.categories = { status: 'error', message: error.message }
-  }
-
-  try {
-    debug.products = { status: 'fetching...' }
-    const products = await getAllProducts()
-    debug.products = { status: 'ok', count: products.length }
-  } catch (error: any) {
-    debug.products = { status: 'error', message: error.message }
+    nodeEnv: process.env.NODE_ENV,
+    databaseConfigured: !!process.env.DATABASE_URL,
   }
 
   return NextResponse.json(debug)
