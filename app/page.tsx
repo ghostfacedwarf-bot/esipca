@@ -115,9 +115,13 @@ export default async function Home() {
             ))}
           </div>
 
-          <div className="text-center pt-12">
+          <div className="flex justify-center gap-4 pt-12 flex-wrap">
             <Link href="/produse" className="btn btn-primary btn-lg">
               Vezi Toate Produsele
+              <ArrowRight className="ml-2" size={20} />
+            </Link>
+            <Link href="/configurator" className="btn btn-primary btn-lg">
+              Configurator Gard
               <ArrowRight className="ml-2" size={20} />
             </Link>
           </div>
