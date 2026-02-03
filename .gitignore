@@ -21,7 +21,7 @@ build
 .env.development
 .env.development.local
 .env.test.local
-.env.production
+# .env.production - committed for Hostinger deployment
 .env.production.local
 .env*.local
 
