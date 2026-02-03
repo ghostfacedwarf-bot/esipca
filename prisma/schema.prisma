@@ -198,3 +198,32 @@ model Settings {
   deliveryDays        String   @default("1-7")
   updatedAt           DateTime @updatedAt
 }
+
+// Live Chat
+model Chat {
+  id            String        @id @default(cuid())
+  sessionId     String        @unique // Browser session
+  visitorName   String?
+  visitorEmail  String?
+  visitorLang   String        @default("ro") // Detected language
+  status        String        @default("active") // active, closed
+  unreadCount   Int           @default(0) // Unread by admin
+  messages      ChatMessage[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model ChatMessage {
+  id              String   @id @default(cuid())
+  chatId          String
+  chat            Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  sender          String   // "visitor" or "admin"
+  originalText    String   // Original message
+  translatedText  String?  // Translated version
+  originalLang    String?  // Detected language
+
+  isRead          Boolean  @default(false)
+
+  createdAt       DateTime @default(now())
+}
