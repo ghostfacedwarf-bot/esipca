@@ -5,6 +5,7 @@ import Footer from '@/components/Footer'
 import GoogleTranslator from '@/components/GoogleTranslator'
 import RegionAutoDetect from '@/components/RegionAutoDetect'
 import CompareBar from '@/components/CompareBar'
+import ChatWidget from '@/app/components/ChatWidget'
 import { Toaster } from 'react-hot-toast'
 import { initializeDatabase } from '@/lib/init-db-auto'
 import { RegionProvider } from '@/lib/region-context'
@@ -117,6 +118,7 @@ export default function RootLayout({
           <CompareBar />
           <Toaster position="bottom-right" />
           <GoogleTranslator />
+          <ChatWidget />
         </RegionProvider>
       </body>
     </html>
