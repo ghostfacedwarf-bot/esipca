@@ -36,7 +36,7 @@ const nextConfig = {
           },
           {
             key: 'X-Frame-Options',
-            value: 'DENY',
+            value: 'SAMEORIGIN',
           },
           {
             key: 'X-XSS-Protection',
@@ -55,8 +55,8 @@ const nextConfig = {
             value: 'camera=(), microphone=(), geolocation=()',
           },
           {
-            key: 'X-Permitted-Cross-Domain-Policies',
-            value: 'none',
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://translate.google.com https://translate.googleapis.com https://*.google.com https://*.gstatic.com; style-src 'self' 'unsafe-inline' https://translate.googleapis.com https://*.gstatic.com https://fonts.googleapis.com; img-src 'self' data: blob: https: http:; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://translate.googleapis.com https://*.google.com https://api.mymemory.translated.net https://*.bnr.ro; frame-src 'self' https://translate.google.com;",
           },
         ],
       },
@@ -64,13 +64,7 @@ const nextConfig = {
   },
 
   redirects: async () => {
-    return [
-      {
-        source: '/admin',
-        destination: '/admin/dashboard',
-        permanent: false,
-      },
-    ]
+    return []
   },
 
   rewrites: async () => {
