@@ -174,13 +174,9 @@ export default function ChatWidget() {
         )}
       </button>
 
-      {/* Chat Window - always in DOM for Google Translate, hidden when closed */}
-      <div
-        className={`fixed w-80 sm:w-[420px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col transition-all duration-300 ${
-          isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
-        }`}
-        style={{ bottom: '220px', right: '20px', zIndex: 10000, maxHeight: 'calc(100vh - 240px)', height: '450px' }}
-      >
+      {/* Chat Window - fits within viewport */}
+      {isOpen && (
+        <div className="fixed w-80 sm:w-[420px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col" style={{ bottom: '220px', right: '20px', zIndex: 10000, maxHeight: 'calc(100vh - 240px)', height: '450px' }}>
           {/* Header */}
           <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-4 flex-shrink-0">
             <h3 className="font-semibold text-base">Live Chat</h3>
@@ -261,6 +257,7 @@ export default function ChatWidget() {
             </div>
           </div>
         </div>
+      )}
     </>
   )
 }
