@@ -251,9 +251,9 @@ export default function GoogleTranslator() {
       <style jsx global>{`
         #translate-floating-container {
           position: fixed;
-          bottom: 20px;
+          bottom: 80px;
           right: 20px;
-          z-index: 9999;
+          z-index: 10000;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
@@ -403,7 +403,7 @@ export default function GoogleTranslator() {
         /* Mobile */
         @media (max-width: 768px) {
           #translate-floating-container {
-            bottom: 15px;
+            bottom: 75px;
             right: 15px;
           }
 

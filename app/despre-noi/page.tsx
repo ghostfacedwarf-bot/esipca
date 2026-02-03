@@ -28,7 +28,7 @@ export default function AboutPage() {
             <h2 className="text-4xl font-bold mb-6 text-dark-900">Cine Suntem</h2>
             <div className="space-y-4 text-dark-700 text-lg leading-relaxed">
               <p>
-                <strong>S.C. Sipca metalica S.R.L</strong> este o companie românească cu o bogată experiență de 30 de ani în producția și distribuția de produse metalice de calitate superioară.
+                <strong>SC ROMEXPRES TRADING SRL</strong> este o companie românească cu o bogată experiență de 30 de ani în producția și distribuția de produse metalice de calitate superioară.
               </p>
               <p>
                 Ne-am impus pe piață prin combinația dintre tradiție și inovație, oferind soluții complete pentru construcții rezidențiale, comerciale și industriale. Reputația noastră se bazează pe calitate, fiabilitate și servicii profesionale.
@@ -36,6 +36,19 @@ export default function AboutPage() {
               <p>
                 Specialitatea noastră este șipcă metalică din oțel zincat DX 51, disponibilă în diverse profile (P1-P9), culori RAL multiple și dimensiuni personalizate. Fiecare produs este supus unor standarde riguroase de control al calității.
               </p>
+            </div>
+
+            {/* Company Details */}
+            <div className="mt-8 p-6 bg-dark-50 rounded-xl border border-dark-200">
+              <h3 className="text-lg font-bold mb-4 text-dark-900">Date Firmă</h3>
+              <ul className="space-y-2 text-dark-700">
+                <li><strong>Nume:</strong> SC ROMEXPRES TRADING SRL</li>
+                <li><strong>CUI:</strong> RO31361919</li>
+                <li><strong>Înmatriculare:</strong> J17/307/2013</li>
+                <li><strong>Adresă:</strong> Galați, Nicolae Gamulea 12, România</li>
+                <li><strong>Email:</strong> <a href="mailto:office@exprestrading.com" className="text-primary-600 hover:underline">office@exprestrading.com</a></li>
+                <li><strong>Telefon:</strong> <a href="tel:+40722292519" className="text-primary-600 hover:underline">+40 (722) 292 519</a></li>
+              </ul>
             </div>
           </div>
 

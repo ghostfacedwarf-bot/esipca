@@ -146,9 +146,9 @@ export default function Footer() {
 
           {/* Bottom bar */}
           <div className="border-t border-dark-700 pt-6 flex flex-col md:flex-row justify-between items-center text-sm text-dark-400">
-            <p>&copy; {currentYear} Esipca Metalica. Toate drepturile rezervate.</p>
+            <p>&copy; {currentYear} SC ROMEXPRES TRADING SRL. Toate drepturile rezervate.</p>
             <p className="mt-4 md:mt-0">
-              Developed with ❤️ for quality products
+              Developed & Designed by <a href="https://lbidesign.studio" target="_blank" rel="noopener noreferrer" className="text-accent-400 hover:text-accent-300 transition-colors">LBIDesign.Studio</a>
             </p>
           </div>
         </div>

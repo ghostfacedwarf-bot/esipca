@@ -230,11 +230,12 @@ export async function initializeDatabase() {
 
       // Insert products
       console.log('[AUTO-INIT] Seeding products...')
+      // Prices are per linear meter (RON)
       const products = [
         {
           name: 'Șipcă Metalică P1 - 7024 MAT',
           slug: 'sipca-metalica-p1-7024-mat',
-          price: 2.68,
+          price: 5.36,
           profile: 'P1',
           color: '7024 Negru',
           finish: 'Mat',
@@ -244,7 +245,7 @@ export async function initializeDatabase() {
         {
           name: 'Șipcă Metalică P2 - Zincat (AL ZN)',
           slug: 'sipca-metalica-p2-zincat',
-          price: 2.28,
+          price: 4.56,
           profile: 'P2',
           color: 'Zincat natural',
           finish: 'Aluminiu-Zinc',
@@ -254,7 +255,7 @@ export async function initializeDatabase() {
         {
           name: 'Șipcă Metalică P3 - 8017 MAT',
           slug: 'sipca-metalica-p3-8017-mat',
-          price: 2.68,
+          price: 5.36,
           profile: 'P3',
           color: '8017 Maro',
           finish: 'Mat',
@@ -264,7 +265,7 @@ export async function initializeDatabase() {
         {
           name: 'Șipcă Metalică P4 - Stejar (3D)',
           slug: 'sipca-metalica-p4-stejar',
-          price: 3.23,
+          price: 6.46,
           profile: 'P4',
           color: 'Stejar (aspect lemn)',
           finish: '3D Lemn',
@@ -274,7 +275,7 @@ export async function initializeDatabase() {
         {
           name: 'Șipcă Metalică P5 - 8019 MAT',
           slug: 'sipca-metalica-p5-8019-mat',
-          price: 2.68,
+          price: 5.36,
           profile: 'P5',
           color: '8019 Negru intens',
           finish: 'Mat',

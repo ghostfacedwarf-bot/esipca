@@ -28,7 +28,18 @@
       "WebFetch(domain:mintcream-dotterel-994812.hostingersite.com)",
       "WebFetch(domain:localhost)",
       "Bash(curl:*)",
-      "Bash(ls -la \"C:\\\\Users\\\\MARIA\\\\esipcametalica-next\\\\public\\\\images\"\" 2>/dev/null || ls -la \"C:UsersMARIAesipcametalica-nextimages\"\")"
+      "Bash(ls -la \"C:\\\\Users\\\\MARIA\\\\esipcametalica-next\\\\public\\\\images\"\" 2>/dev/null || ls -la \"C:UsersMARIAesipcametalica-nextimages\"\")",
+      "Bash(gh auth:*)",
+      "Bash(git fetch:*)",
+      "Bash(npx tsc:*)",
+      "Bash(timeout:*)",
+      "WebFetch(domain:esipcametalica.ro)",
+      "Bash(ren:*)",
+      "Bash(git reset:*)",
+      "Bash(ping:*)",
+      "Bash(npx tsx:*)",
+      "Bash(node -e:*)",
+      "Bash(npm version:*)"
     ]
   }
 }
