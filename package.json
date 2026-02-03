@@ -4,7 +4,7 @@
   "description": "Esipcametalica - Metal Products E-commerce Platform",
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma db push --accept-data-loss && next build",
+    "build": "dotenv -e .env.production -- prisma generate && dotenv -e .env.production -- prisma db push --accept-data-loss && next build",
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx",
     "db:push": "prisma db push",
@@ -49,6 +49,7 @@
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "archiver": "^7.0.1",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^8.56.0",
     "eslint-config-next": "^16.1.3"
   },
