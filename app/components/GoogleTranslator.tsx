@@ -253,7 +253,7 @@ export default function GoogleTranslator() {
           position: fixed;
           bottom: 80px;
           right: 20px;
-          z-index: 10000;
+          z-index: 10002;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
@@ -294,6 +294,7 @@ export default function GoogleTranslator() {
           overflow: hidden;
           min-width: 240px;
           animation: popupSlideIn 0.3s ease-out;
+          z-index: 10003;
         }
 
         @keyframes popupSlideIn {
