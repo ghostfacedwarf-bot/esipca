@@ -4,7 +4,7 @@
   "description": "Esipcametalica - Metal Products E-commerce Platform",
   "scripts": {
     "dev": "next dev",
-    "build": "dotenv -e .env.production -- prisma generate --schema=prisma/schema.mysql.prisma && dotenv -e .env.production -- prisma db push --accept-data-loss --schema=prisma/schema.mysql.prisma && next build --no-turbo",
+    "build": "dotenv -e .env.production -- prisma generate --schema=prisma/schema.mysql.prisma && dotenv -e .env.production -- prisma db push --accept-data-loss --schema=prisma/schema.mysql.prisma && next build",
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx",
     "db:push": "prisma db push",
