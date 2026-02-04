@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
   reactStrictMode: true,
 
   // Use Webpack instead of Turbopack for Hostinger compatibility
@@ -31,6 +30,10 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
           {
             key: 'X-Frame-Options',
             value: 'SAMEORIGIN',
