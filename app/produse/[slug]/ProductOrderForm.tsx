@@ -215,17 +215,17 @@ export default function ProductOrderForm({
   const attributeKeys = getAttributeKeys()
 
   return (
-    <div className="space-y-3 notranslate" translate="no">
+    <div className="space-y-3">
       {/* Regional Base Price */}
       <div className="p-4 bg-primary-50 rounded-lg">
         <div className="flex items-center justify-between mb-2">
           <p className="text-dark-600 text-sm">Preț de bază</p>
-          <span className="text-xs px-2 py-1 bg-white rounded-full text-dark-600">
+          <span className="text-xs px-2 py-1 bg-white rounded-full text-dark-600 notranslate" translate="no">
             {region === 'EU' ? '🇪🇺 Europa' : '🇷🇴 Romania'}
           </span>
         </div>
         <div className="flex items-baseline gap-3">
-          <span className="text-4xl font-bold text-primary-600">
+          <span className="text-4xl font-bold text-primary-600 notranslate" translate="no">
             {basePrice.toFixed(2)}
           </span>
           <span className="text-xl text-dark-700">
@@ -233,7 +233,7 @@ export default function ProductOrderForm({
           </span>
         </div>
         <p className="text-sm text-dark-500 mt-1">
-          ~{formatEur(ronToEur(basePrice, eurRate))} EUR <span className="text-xs">(curs BNR)</span>
+          <span className="notranslate" translate="no">~{formatEur(ronToEur(basePrice, eurRate))} EUR</span> <span className="text-xs">(curs BNR)</span>
         </p>
       </div>
 
@@ -377,7 +377,7 @@ export default function ProductOrderForm({
       )}
 
       {/* Length Input */}
-      <div className="p-4 bg-white border border-dark-100 rounded-lg notranslate" translate="no">
+      <div className="p-4 bg-white border border-dark-100 rounded-lg">
         <label className="block text-sm font-semibold text-dark-800 mb-2">
           Lungime (m)
         </label>
@@ -460,7 +460,7 @@ export default function ProductOrderForm({
       )}
 
       {/* Quantity Selector */}
-      <div className="p-4 bg-white border border-dark-100 rounded-lg notranslate" translate="no">
+      <div className="p-4 bg-white border border-dark-100 rounded-lg">
         <label className="block text-sm font-semibold text-dark-800 mb-2">
           Cantitate (unități)
         </label>

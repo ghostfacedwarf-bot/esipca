@@ -149,14 +149,11 @@ export default function ChatWidget() {
         onClick={() => setIsOpen(!isOpen)}
         style={{
           boxShadow: isOpen ? undefined : '0 4px 20px rgba(245, 158, 11, 0.4)',
-          bottom: '150px',
-          right: '20px',
-          zIndex: 10001,
         }}
-        className={`fixed rounded-[50px] flex items-center justify-center gap-2.5 transition-all duration-300 hover:-translate-y-0.5 ${
+        className={`fixed bottom-[145px] right-5 max-md:bottom-[140px] max-md:right-[15px] z-[10001] flex items-center justify-center transition-all duration-300 hover:-translate-y-0.5 ${
           isOpen
             ? 'bg-slate-600 hover:bg-slate-700 w-14 h-14 rounded-full'
-            : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 px-6 py-3'
+            : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 rounded-[50px] px-6 py-3 md:gap-2.5 max-md:w-[54px] max-md:h-[54px] max-md:rounded-full max-md:p-0'
         }`}
       >
         {isOpen ? (
@@ -164,7 +161,7 @@ export default function ChatWidget() {
         ) : (
           <>
             <MessageCircle className="w-5 h-5 text-white" />
-            <span className="text-white font-semibold text-[15px]">Live Chat</span>
+            <span className="text-white font-semibold text-[15px] hidden md:inline">Live Chat</span>
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
                 {unreadCount}

@@ -138,15 +138,26 @@ export default function GoogleTranslator() {
 
     // Define callback
     (window as any).googleTranslateElementInit = function () {
-      new (window as any).google.translate.TranslateElement(
-        {
-          pageLanguage: 'ro',
-          includedLanguages: languages.map(l => l.code).join(','),
-          autoDisplay: false,
-        },
-        'google_translate_element'
-      )
-      setIsLoaded(true)
+      console.log('[GoogleTranslator] googleTranslateElementInit called')
+      try {
+        new (window as any).google.translate.TranslateElement(
+          {
+            pageLanguage: 'ro',
+            includedLanguages: languages.map(l => l.code).join(','),
+            autoDisplay: false,
+          },
+          'google_translate_element'
+        )
+        setIsLoaded(true)
+        console.log('[GoogleTranslator] TranslateElement created, isLoaded=true')
+        // Check if combo exists after a short delay
+        setTimeout(() => {
+          const combo = document.querySelector('.goog-te-combo')
+          console.log('[GoogleTranslator] .goog-te-combo exists:', !!combo)
+        }, 1000)
+      } catch (err) {
+        console.error('[GoogleTranslator] Error creating TranslateElement:', err)
+      }
     }
 
     // Load script
@@ -154,6 +165,8 @@ export default function GoogleTranslator() {
       const script = document.createElement('script')
       script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit'
       script.async = true
+      script.onerror = () => console.error('[GoogleTranslator] Failed to load Google Translate script')
+      script.onload = () => console.log('[GoogleTranslator] Script loaded successfully')
       document.body.appendChild(script)
     } else if ((window as any).google?.translate) {
       setIsLoaded(true)
@@ -217,6 +230,7 @@ export default function GoogleTranslator() {
   const selectLanguage = useCallback((langCode: string) => {
     // Find the Google Translate select element
     const select = document.querySelector('.goog-te-combo') as HTMLSelectElement
+    console.log('[GoogleTranslator] selectLanguage called:', langCode, 'select element:', select)
     if (select) {
       select.value = langCode
       select.dispatchEvent(new Event('change', { bubbles: true }))
@@ -224,6 +238,9 @@ export default function GoogleTranslator() {
       // Save user's manual preference
       localStorage.setItem(LANGUAGE_DETECTED_KEY, 'true')
       localStorage.setItem(LANGUAGE_PREFERENCE_KEY, langCode)
+      console.log('[GoogleTranslator] Language changed to:', langCode)
+    } else {
+      console.error('[GoogleTranslator] .goog-te-combo element not found!')
     }
     setIsOpen(false)
   }, [])

@@ -315,8 +315,17 @@ body {
   display: none !important;
 }
 
-.skiptranslate {
+/* Only hide the top banner skiptranslate, not all skiptranslate elements */
+/* The Google Translate widget needs .skiptranslate to function */
+body > .skiptranslate:first-of-type {
   display: none !important;
+}
+
+/* Hide the default Google Translate gadget (we use custom UI) */
+#google_translate_element .goog-te-gadget {
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
 }
 
 /* Ensure proper translation */
