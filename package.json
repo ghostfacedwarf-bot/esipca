@@ -4,7 +4,7 @@
   "description": "Esipcametalica - Metal Products E-commerce Platform",
   "scripts": {
     "dev": "next dev",
-    "prebuild": "rm -rf .next || true",
+    "prebuild": "node -e \"const fs = require('fs'); const path = '.next'; if(fs.existsSync(path)){fs.rmSync(path,{recursive:true,force:true});console.log('.next deleted')}\"",
     "build": "dotenv -e .env.production -- prisma generate --schema=prisma/schema.mysql.prisma && dotenv -e .env.production -- prisma db push --accept-data-loss --schema=prisma/schema.mysql.prisma && next build",
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx",
