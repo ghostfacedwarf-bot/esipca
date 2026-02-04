@@ -120,7 +120,7 @@ const initialState: ConfiguratorState = {
   model: '',
   length: 20,
   height: 1.9,
-  base: 0.9,
+  base: 0,
   autoGates: 1,
   autoGatesConfig: [{ type: 'batanta', width: 3500, integratedPedestrian: false }],
   pedestrianGates: 1,
@@ -172,11 +172,8 @@ export const useConfiguratorStore = create<ConfiguratorState & ConfiguratorActio
       },
 
       setHeight: (height) => {
-        // Auto-calculate base height
-        let calculatedBase = height / 2 - 0.01
-        calculatedBase = Math.max(0, Math.min(1.8, calculatedBase, height))
-        calculatedBase = Math.round(calculatedBase * 100) / 100
-        set({ height, base: calculatedBase })
+        // Only update height, base is independent
+        set({ height })
       },
 
       setBase: (base) => set({ base }),

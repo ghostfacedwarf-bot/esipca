@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { useConfiguratorStore, PROFILE_SPECS } from '@/lib/configurator-store'
+import { useRegionStore } from '@/lib/store'
 import Image from 'next/image'
 
-// Price per linear meter based on profile
-const PRICE_PER_METER: Record<string, number> = {
-  'P1-P9': 2.68,
-  'P10-P18': 3.18,
-  'P19-P27': 2.78,
+// Fallback prices (used while loading from API)
+const DEFAULT_PRICES: Record<string, number> = {
+  'P1-P9': 5.36,
+  'P10-P18': 6.36,
+  'P19-P27': 5.56,
 }
 
 interface ImageManifest {
@@ -31,15 +32,29 @@ export default function ConfiguratorPreview() {
     currentStep,
   } = useConfiguratorStore()
 
+  const region = useRegionStore((s) => s.region)
   const [manifest, setManifest] = useState<ImageManifest | null>(null)
   const [imageSrc, setImageSrc] = useState('/images/fence-previews/gard_horizontal_1.e705ca8f.png')
+  const [prices, setPrices] = useState<Record<string, number>>(DEFAULT_PRICES)
 
-  // Load manifest
+  // EU prices are double Romania prices
+  const getRegionalPrice = (price: number) => region === 'EU' ? price * 2 : price
+
+  // Load manifest and prices
   useEffect(() => {
     fetch('/images/fence-previews/images-manifest.json')
       .then((res) => res.json())
       .then((data) => setManifest(data))
       .catch((err) => console.error('Failed to load manifest:', err))
+
+    fetch('/api/configurator/prices')
+      .then(res => res.json())
+      .then(data => {
+        if (data.prices) {
+          setPrices(data.prices)
+        }
+      })
+      .catch(err => console.error('Failed to load prices:', err))
   }, [])
 
   // Find image from manifest
@@ -83,18 +98,21 @@ export default function ConfiguratorPreview() {
 
   // Calculate price estimate
   const calculatePrice = () => {
-    if (!model) return { slats: 0, totalMeters: 0, pricePerMeter: 0, doubleSidedSurcharge: 0, totalPrice: 0 }
+    if (!model) return { slats: 0, totalMeters: 0, pricePerMeter: 0, doubleSidedSurcharge: 0, totalPrice: 0, region }
 
     const profileSpec = PROFILE_SPECS[profileRange]
     const fenceHeight = Math.max(0, height - base)
-    let pricePerMeter = PRICE_PER_METER[profileRange]
+    let basePricePerMeter = prices[profileRange] || DEFAULT_PRICES[profileRange]
 
     // Double-sided painting surcharge
     // LUCIOS profiles: P6, P7, P11, P15, P16, P24, P25
     const luciosProfiles = ['P6', 'P7', 'P11', 'P15', 'P16', 'P24', 'P25']
     const isLucios = luciosProfiles.includes(color)
     const doubleSidedSurcharge = doubleSided ? (isLucios ? 0.10 : 0.30) : 0
-    pricePerMeter += doubleSidedSurcharge
+    basePricePerMeter += doubleSidedSurcharge
+
+    // Apply regional pricing (EU = 2x Romania)
+    const pricePerMeter = getRegionalPrice(basePricePerMeter)
 
     // Gap in mm
     const gapMm = slatGap === 'mica' ? 10 : slatGap === 'medie' ? 20 : 30
@@ -107,8 +125,9 @@ export default function ConfiguratorPreview() {
         slats: rows,
         totalMeters: Math.round(totalMeters * 100) / 100,
         pricePerMeter: Math.round(pricePerMeter * 100) / 100,
-        doubleSidedSurcharge,
+        doubleSidedSurcharge: getRegionalPrice(doubleSidedSurcharge),
         totalPrice: Math.round(totalMeters * pricePerMeter * 100) / 100,
+        region,
       }
     } else {
       // Vertical: slats along the length
@@ -119,8 +138,9 @@ export default function ConfiguratorPreview() {
         slats: totalSlats,
         totalMeters: Math.round(totalMeters * 100) / 100,
         pricePerMeter: Math.round(pricePerMeter * 100) / 100,
-        doubleSidedSurcharge,
+        doubleSidedSurcharge: getRegionalPrice(doubleSidedSurcharge),
         totalPrice: Math.round(totalMeters * pricePerMeter * 100) / 100,
+        region,
       }
     }
   }
@@ -246,7 +266,12 @@ export default function ConfiguratorPreview() {
 
               <div className="border-t border-amber-300 pt-2 mt-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-amber-800 font-medium">TOTAL ESTIMAT:</span>
+                  <div>
+                    <span className="text-amber-800 font-medium">TOTAL ESTIMAT:</span>
+                    <span className="text-xs ml-2 px-2 py-0.5 bg-amber-200 rounded-full">
+                      {region === 'EU' ? '🇪🇺 Europa' : '🇷🇴 Romania'}
+                    </span>
+                  </div>
                   <span className="text-2xl font-bold text-amber-600">{priceCalc.totalPrice.toFixed(2)} RON</span>
                 </div>
               </div>

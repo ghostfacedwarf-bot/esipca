@@ -22,6 +22,7 @@ interface ProductOrderFormProps {
   variants: Variant[]
   priceType: string
   priceFrom: number
+  discountPercent?: number
   categoryName?: string
   specs?: Record<string, any>
 }
@@ -32,6 +33,7 @@ export default function ProductOrderForm({
   variants,
   priceType,
   priceFrom,
+  discountPercent = 0,
   categoryName = '',
   specs = {},
 }: ProductOrderFormProps) {
@@ -57,14 +59,31 @@ export default function ProductOrderForm({
   const region = useRegionStore((state) => state.region)
   const { rate: eurRate } = useExchangeRate()
 
+  // Apply discount to a price
+  const applyDiscount = (price: number): number => {
+    if (discountPercent <= 0) return price
+    return price * (1 - discountPercent / 100)
+  }
+
+  // Check if discount is active
+  const hasDiscount = discountPercent > 0
+
   // Calculate base price for region (use first variant's priceEU ratio or default to double for EU)
-  const basePrice = region === 'EU'
+  const basePriceOriginal = region === 'EU'
     ? (variants[0]?.priceEU ? (priceFrom * (variants[0].priceEU / variants[0].price)) : priceFrom * 2)
     : priceFrom
+  const basePrice = applyDiscount(basePriceOriginal)
 
-  // Get regional price for a variant
+  // Get regional price for a variant (with discount applied)
   const getVariantPrice = (variant: Variant | null): number => {
     if (!variant) return basePrice // Use regional base price when no variant selected
+    const originalPrice = getRegionalPrice(variant.price, variant.priceEU, region)
+    return applyDiscount(originalPrice)
+  }
+
+  // Get original variant price (without discount)
+  const getVariantPriceOriginal = (variant: Variant | null): number => {
+    if (!variant) return basePriceOriginal
     return getRegionalPrice(variant.price, variant.priceEU, region)
   }
 
@@ -100,8 +119,12 @@ export default function ProductOrderForm({
   const piecesNeeded = Math.ceil(lengthNum * bucinPerMetru * quantity)
 
   // Calculate total price: price per piece × pieces needed (using regional price)
-  const currentPrice = getVariantPrice(selectedVariant)
-  const totalPrice = currentPrice * piecesNeeded
+  // Round prices to 2 decimals to avoid floating point errors
+  const currentPrice = Math.round(getVariantPrice(selectedVariant) * 100) / 100
+  const currentPriceOriginal = Math.round(getVariantPriceOriginal(selectedVariant) * 100) / 100
+  const totalPrice = Math.round(currentPrice * piecesNeeded * 100) / 100
+  const totalPriceOriginal = Math.round(currentPriceOriginal * piecesNeeded * 100) / 100
+  const totalSavings = Math.round((totalPriceOriginal - totalPrice) * 100) / 100
 
   // Group variants by attributes for better UX
   const getUniqueAttributeValues = (attributeKey: string) => {
@@ -220,11 +243,23 @@ export default function ProductOrderForm({
       <div className="p-4 bg-primary-50 rounded-lg">
         <div className="flex items-center justify-between mb-2">
           <p className="text-dark-600 text-sm">Preț de bază</p>
-          <span className="text-xs px-2 py-1 bg-white rounded-full text-dark-600 notranslate" translate="no">
-            {region === 'EU' ? '🇪🇺 Europa' : '🇷🇴 Romania'}
-          </span>
+          <div className="flex items-center gap-2">
+            {hasDiscount && (
+              <span className="px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full">
+                -{discountPercent}%
+              </span>
+            )}
+            <span className="text-xs px-2 py-1 bg-white rounded-full text-dark-600 notranslate" translate="no">
+              {region === 'EU' ? '🇪🇺 Europa' : '🇷🇴 Romania'}
+            </span>
+          </div>
         </div>
         <div className="flex items-baseline gap-3">
+          {hasDiscount && (
+            <span className="text-xl text-dark-400 line-through notranslate" translate="no">
+              {basePriceOriginal.toFixed(2)}
+            </span>
+          )}
           <span className="text-4xl font-bold text-primary-600 notranslate" translate="no">
             {basePrice.toFixed(2)}
           </span>
@@ -442,9 +477,16 @@ export default function ProductOrderForm({
             </div>
             <div>
               <p className="text-dark-600 text-xs mb-1">Preț/buc ({region === 'EU' ? 'Europa' : 'Romania'})</p>
-              <p className="font-bold text-primary-600">
-                {currentPrice.toFixed(2)} RON
-              </p>
+              <div className="flex items-baseline gap-2">
+                {hasDiscount && (
+                  <span className="text-sm text-dark-400 line-through">
+                    {getVariantPriceOriginal(selectedVariant).toFixed(2)}
+                  </span>
+                )}
+                <p className="font-bold text-primary-600">
+                  {currentPrice.toFixed(2)} RON
+                </p>
+              </div>
             </div>
             <div>
               <p className="text-dark-600 text-xs mb-1">Buc. necesare</p>
@@ -494,11 +536,21 @@ export default function ProductOrderForm({
         <div className="space-y-2 text-sm">
           <div className="flex justify-between items-center text-xs text-dark-500">
             <span>Preturi pentru:</span>
-            <span className="font-medium">{region === 'EU' ? '🇪🇺 Europa' : '🇷🇴 Romania'}</span>
+            <div className="flex items-center gap-2">
+              {hasDiscount && (
+                <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded">
+                  -{discountPercent}%
+                </span>
+              )}
+              <span className="font-medium">{region === 'EU' ? '🇪🇺 Europa' : '🇷🇴 Romania'}</span>
+            </div>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-dark-700">Preț/buc:</span>
             <div className="text-right">
+              {hasDiscount && (
+                <span className="text-xs text-dark-400 line-through mr-1">{getVariantPriceOriginal(selectedVariant).toFixed(2)}</span>
+              )}
               <span className="font-semibold text-dark-900">{currentPrice.toFixed(2)} RON</span>
               <span className="text-xs text-dark-500 ml-1">(~{formatEur(ronToEur(currentPrice, eurRate))} €)</span>
             </div>
@@ -508,12 +560,24 @@ export default function ProductOrderForm({
             <span className="font-semibold text-dark-900">{piecesNeeded} buc.</span>
           </div>
           <div className="border-t border-primary-300 pt-2">
+            {hasDiscount && (
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-dark-500 text-xs">Preț original:</span>
+                <span className="text-dark-400 line-through">{totalPriceOriginal.toFixed(2)} RON</span>
+              </div>
+            )}
             <div className="flex justify-between items-center">
               <span className="font-bold text-dark-900">TOTAL:</span>
               <div className="text-right">
                 <span className="text-2xl font-bold text-primary-600">{totalPrice.toFixed(2)} RON</span>
               </div>
             </div>
+            {hasDiscount && totalSavings > 0 && (
+              <div className="flex justify-between items-center mt-1">
+                <span className="text-green-600 text-xs font-semibold">Economisești:</span>
+                <span className="text-green-600 font-bold">{totalSavings.toFixed(2)} RON</span>
+              </div>
+            )}
             <div className="flex justify-between items-center mt-1">
               <span className="text-xs text-dark-500">
                 ({lengthNum}m × {quantity} × {bucinPerMetru} = {piecesNeeded} buc)

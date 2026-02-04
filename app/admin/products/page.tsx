@@ -32,6 +32,7 @@ interface Product {
   shortDescription: string | null
   longDescription: string | null
   priceFrom: number
+  discountPercent: number
   priceType: string
   specs: Record<string, any> | null
   isFeatured: boolean
@@ -51,6 +52,7 @@ interface EditData {
   shortDescription: string
   longDescription: string
   priceFrom: number
+  discountPercent: number
   priceType: string
   specs: Record<string, any>
   isFeatured: boolean
@@ -70,6 +72,8 @@ export default function AdminProductsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [newSpecKey, setNewSpecKey] = useState('')
   const [newSpecValue, setNewSpecValue] = useState('')
+  const [bulkDiscount, setBulkDiscount] = useState('')
+  const [isApplyingBulk, setIsApplyingBulk] = useState(false)
 
   const fetchProducts = async () => {
     setIsLoading(true)
@@ -103,6 +107,7 @@ export default function AdminProductsPage() {
       shortDescription: product.shortDescription || '',
       longDescription: product.longDescription || '',
       priceFrom: product.priceFrom,
+      discountPercent: product.discountPercent || 0,
       priceType: product.priceType,
       specs: product.specs || {},
       isFeatured: product.isFeatured,
@@ -132,6 +137,7 @@ export default function AdminProductsPage() {
           shortDescription: editData.shortDescription,
           longDescription: editData.longDescription,
           variantPrice: editData.priceFrom,
+          discountPercent: editData.discountPercent,
           priceType: editData.priceType,
           specs: editData.specs,
           isFeatured: editData.isFeatured,
@@ -179,6 +185,41 @@ export default function AdminProductsPage() {
     })
   }
 
+  const applyBulkDiscount = async () => {
+    const discount = parseFloat(bulkDiscount)
+    if (isNaN(discount) || discount < 0 || discount > 100) {
+      alert('Introduceți o reducere validă (0-100%)')
+      return
+    }
+
+    if (!confirm(`Sigur vrei să aplici ${discount}% reducere la TOATE produsele?`)) {
+      return
+    }
+
+    setIsApplyingBulk(true)
+    try {
+      const res = await fetch('/api/admin/products/bulk-discount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ discountPercent: discount }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        alert(`Reducere de ${discount}% aplicată la ${data.updatedCount} produse!`)
+        await fetchProducts()
+        setBulkDiscount('')
+      } else {
+        alert('Eroare la aplicarea reducerii')
+      }
+    } catch (error) {
+      console.error('Bulk discount error:', error)
+      alert('Eroare la aplicarea reducerii')
+    } finally {
+      setIsApplyingBulk(false)
+    }
+  }
+
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: 'general', label: 'General', icon: <FileText size={16} /> },
     { id: 'price', label: 'Prețuri', icon: <Tag size={16} /> },
@@ -207,6 +248,28 @@ export default function AdminProductsPage() {
               </div>
             </div>
             <div className="flex items-center gap-4">
+              {/* Bulk Discount */}
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 rounded-lg border border-amber-200">
+                <span className="text-sm text-amber-700 font-medium">Reducere toate:</span>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  value={bulkDiscount}
+                  onChange={(e) => setBulkDiscount(e.target.value)}
+                  placeholder="0"
+                  className="w-16 px-2 py-1 text-sm border border-amber-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+                <span className="text-sm text-amber-600">%</span>
+                <button
+                  onClick={applyBulkDiscount}
+                  disabled={isApplyingBulk || !bulkDiscount}
+                  className="px-3 py-1 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 text-white text-sm font-medium rounded transition-colors"
+                >
+                  {isApplyingBulk ? '...' : 'Aplică'}
+                </button>
+              </div>
               <button
                 onClick={fetchProducts}
                 className="p-2 text-slate-600 hover:text-amber-500 transition-colors"
@@ -268,14 +331,38 @@ export default function AdminProductsPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-semibold text-slate-800">
-                          {product.priceFrom.toFixed(2)} RON
-                        </span>
+                        <div>
+                          {product.discountPercent > 0 ? (
+                            <>
+                              <span className="font-semibold text-green-600">
+                                {(product.priceFrom * (1 - product.discountPercent / 100)).toFixed(2)} RON
+                              </span>
+                              <span className="ml-2 text-xs text-slate-400 line-through">
+                                {product.priceFrom.toFixed(2)}
+                              </span>
+                              <span className="ml-1 px-1.5 py-0.5 bg-red-100 text-red-600 text-xs font-medium rounded">
+                                -{product.discountPercent}%
+                              </span>
+                            </>
+                          ) : (
+                            <span className="font-semibold text-slate-800">
+                              {product.priceFrom.toFixed(2)} RON
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-slate-600">
-                          {(product.priceFrom * 2).toFixed(2)} RON
-                        </span>
+                        <div>
+                          {product.discountPercent > 0 ? (
+                            <span className="text-green-600">
+                              {(product.priceFrom * 2 * (1 - product.discountPercent / 100)).toFixed(2)} RON
+                            </span>
+                          ) : (
+                            <span className="text-slate-600">
+                              {(product.priceFrom * 2).toFixed(2)} RON
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1">
@@ -419,7 +506,7 @@ export default function AdminProductsPage() {
                   <div className="grid grid-cols-2 gap-6">
                     <div className="p-4 bg-slate-50 rounded-xl">
                       <label className="block text-sm font-medium text-slate-700 mb-2">
-                        🇷🇴 Preț România (RON)
+                        🇷🇴 Preț Original România (RON)
                       </label>
                       <div className="flex items-center gap-2">
                         <input
@@ -432,23 +519,55 @@ export default function AdminProductsPage() {
                         <span className="text-slate-500 font-medium">RON</span>
                       </div>
                       <p className="text-xs text-slate-500 mt-2">
-                        Acesta este prețul de bază afișat pe site pentru clienții din România
+                        Prețul de bază înainte de reducere
                       </p>
                     </div>
 
-                    <div className="p-4 bg-blue-50 rounded-xl">
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        🇪🇺 Preț Europa (calculat automat)
+                    <div className="p-4 bg-red-50 rounded-xl border-2 border-red-200">
+                      <label className="block text-sm font-medium text-red-700 mb-2">
+                        🏷️ Reducere (%)
                       </label>
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-lg font-semibold text-slate-600">
-                          {(editData.priceFrom * 2).toFixed(2)}
-                        </div>
-                        <span className="text-slate-500 font-medium">RON</span>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="100"
+                          value={editData.discountPercent}
+                          onChange={(e) => setEditData({ ...editData, discountPercent: parseFloat(e.target.value) || 0 })}
+                          className="flex-1 px-3 py-2 border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-lg font-semibold"
+                        />
+                        <span className="text-red-500 font-medium">%</span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-2">
-                        Prețul pentru Europa este automat 2× prețul din România
+                      <p className="text-xs text-red-600 mt-2">
+                        0 = fără reducere
                       </p>
+                    </div>
+                  </div>
+
+                  {/* Calculated final prices */}
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+                      <label className="block text-sm font-medium text-green-700 mb-2">
+                        🇷🇴 Preț Final România
+                      </label>
+                      <div className="text-2xl font-bold text-green-600">
+                        {(editData.priceFrom * (1 - editData.discountPercent / 100)).toFixed(2)} RON
+                      </div>
+                      {editData.discountPercent > 0 && (
+                        <p className="text-xs text-green-600 mt-1">
+                          Economie: {(editData.priceFrom * editData.discountPercent / 100).toFixed(2)} RON
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                      <label className="block text-sm font-medium text-blue-700 mb-2">
+                        🇪🇺 Preț Final Europa (×2)
+                      </label>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {(editData.priceFrom * 2 * (1 - editData.discountPercent / 100)).toFixed(2)} RON
+                      </div>
                     </div>
                   </div>
 

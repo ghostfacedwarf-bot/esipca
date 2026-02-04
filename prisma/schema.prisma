@@ -47,7 +47,8 @@ model Product {
   category            Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   // Pricing
-  priceFrom           Float      // Starting price
+  priceFrom           Float      // Starting price (before discount)
+  discountPercent     Float      @default(0) // Discount percentage (0-100)
   priceType           String     @default("per_piece") // per_piece or per_meter
 
   // Specifications as JSON

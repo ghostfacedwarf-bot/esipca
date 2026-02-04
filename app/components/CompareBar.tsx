@@ -17,7 +17,7 @@ export default function CompareBar() {
   if (!mounted || products.length === 0) return null
 
   return (
-    <div className="fixed bottom-24 left-4 right-4 sm:left-auto sm:right-4 sm:w-auto bg-white border-2 border-primary-500 rounded-xl shadow-xl z-40 animate-slide-up">
+    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] sm:w-auto sm:min-w-[320px] bg-white border-2 border-primary-500 rounded-xl shadow-xl z-40 animate-slide-up">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 px-4 py-2 bg-primary-500 text-white rounded-t-lg">
         <div className="flex items-center gap-2 font-semibold">

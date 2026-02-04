@@ -122,6 +122,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               variants={product.variants as any}
               priceType={product.priceType}
               priceFrom={Number(product.priceFrom)}
+              discountPercent={Number(product.discountPercent) || 0}
               categoryName={product.category.name}
               specs={product.specs as any}
             />

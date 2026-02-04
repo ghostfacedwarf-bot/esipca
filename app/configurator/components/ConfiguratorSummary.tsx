@@ -1,30 +1,52 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useConfiguratorStore, PROFILE_SPECS } from '@/lib/configurator-store'
+import { useRegionStore } from '@/lib/store'
 import { Info } from 'lucide-react'
 
-// Price per linear meter based on profile
-const PRICE_PER_METER: Record<string, number> = {
-  'P1-P9': 2.68,
-  'P10-P18': 3.18,
-  'P19-P27': 2.78,
+// Fallback prices (used while loading from API)
+const DEFAULT_PRICES: Record<string, number> = {
+  'P1-P9': 5.36,
+  'P10-P18': 6.36,
+  'P19-P27': 5.56,
 }
 
 export default function ConfiguratorSummary() {
   const state = useConfiguratorStore()
+  const region = useRegionStore((s) => s.region)
+  const [prices, setPrices] = useState<Record<string, number>>(DEFAULT_PRICES)
+
+  // Fetch prices from database on mount
+  useEffect(() => {
+    fetch('/api/configurator/prices')
+      .then(res => res.json())
+      .then(data => {
+        if (data.prices) {
+          setPrices(data.prices)
+        }
+      })
+      .catch(err => console.error('Failed to load prices:', err))
+  }, [])
+
+  // EU prices are double Romania prices
+  const getRegionalPrice = (price: number) => region === 'EU' ? price * 2 : price
 
   // Calculate total linear meters and price
   const calculateTotal = () => {
     const profileSpec = PROFILE_SPECS[state.profileRange]
     const fenceHeight = Math.max(0, state.height - state.base)
-    let pricePerMeter = PRICE_PER_METER[state.profileRange]
+    let basePricePerMeter = prices[state.profileRange] || DEFAULT_PRICES[state.profileRange]
     const gapMm = state.slatGap === 'mica' ? 10 : state.slatGap === 'medie' ? 20 : 30
 
-    // Double-sided painting surcharge
-    const luciosProfiles = ['P6', 'P7', 'P11', 'P15', 'P16', 'P24', 'P25']
-    const isLucios = luciosProfiles.includes(state.color)
-    const doubleSidedSurcharge = state.doubleSided ? (isLucios ? 0.10 : 0.30) : 0
-    pricePerMeter += doubleSidedSurcharge
+    // Double-sided painting surcharge (MAT: +0.30, LUCIOS: +0.10)
+    // Using MAT surcharge as default since most profiles are MAT
+    // Actual price confirmed in final quote based on specific profile selected
+    const doubleSidedSurcharge = state.doubleSided ? 0.30 : 0
+    basePricePerMeter += doubleSidedSurcharge
+
+    // Apply regional pricing (EU = 2x Romania)
+    const pricePerMeter = getRegionalPrice(basePricePerMeter)
 
     if (state.model === 'orizontal') {
       const rows = Math.ceil((fenceHeight * 1000) / (profileSpec.widthMm + gapMm))
@@ -32,7 +54,8 @@ export default function ConfiguratorSummary() {
       return {
         totalMeters: Math.round(totalMeters * 100) / 100,
         totalPrice: Math.round(totalMeters * pricePerMeter * 100) / 100,
-        doubleSidedSurcharge,
+        doubleSidedSurcharge: getRegionalPrice(doubleSidedSurcharge),
+        pricePerMeter,
       }
     } else {
       const slatsPerMeter = profileSpec.piecesPerMeter
@@ -41,7 +64,8 @@ export default function ConfiguratorSummary() {
       return {
         totalMeters: Math.round(totalMeters * 100) / 100,
         totalPrice: Math.round(totalMeters * pricePerMeter * 100) / 100,
-        doubleSidedSurcharge,
+        doubleSidedSurcharge: getRegionalPrice(doubleSidedSurcharge),
+        pricePerMeter,
       }
     }
   }
@@ -90,8 +114,14 @@ export default function ConfiguratorSummary() {
 
           <div className="pt-2 mt-2 border-t border-slate-200 space-y-2">
             <SummaryItem label="Total metri liniari" value={`${totals.totalMeters} m`} />
+            <SummaryItem label="Preț/ml" value={`${totals.pricePerMeter.toFixed(2)} RON`} />
             <div className="flex items-center justify-between py-2 bg-amber-50 rounded-lg px-3 -mx-1">
-              <span className="text-amber-800 font-medium">TOTAL ESTIMAT:</span>
+              <div>
+                <span className="text-amber-800 font-medium">TOTAL ESTIMAT:</span>
+                <span className="text-xs ml-2 px-2 py-0.5 bg-amber-200 rounded-full">
+                  {region === 'EU' ? '🇪🇺 Europa' : '🇷🇴 Romania'}
+                </span>
+              </div>
               <span className="text-xl font-bold text-amber-600">{totals.totalPrice.toFixed(2)} RON</span>
             </div>
           </div>
