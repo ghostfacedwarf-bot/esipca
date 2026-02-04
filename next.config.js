@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
 
+  // Transpile Prisma to fix Turbopack module resolution
+  transpilePackages: ['@prisma/client'],
+
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
