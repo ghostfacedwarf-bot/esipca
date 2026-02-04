@@ -2,12 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
 
-  // Use Webpack instead of Turbopack for Hostinger compatibility
-  // Turbopack requires worker threads which aren't available on shared hosting
-  turbopack: {
-    // Disable worker threads in Turbopack
-  },
-
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
@@ -23,7 +17,8 @@ const nextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 365, // 1 year
   },
 
-  serverExternalPackages: ['@prisma/client'],
+  // Bundle Prisma client instead of treating as external
+  // This fixes Turbopack module resolution issues on Hostinger
 
   headers: async () => {
     return [
