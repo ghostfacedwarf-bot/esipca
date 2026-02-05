@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { rateLimit, getClientIp, RATE_LIMITS } from '@/lib/rate-limit'
+import { sendContactFormEmail } from '@/lib/email'
 
 const contactSchema = z.object({
   name: z.string().min(2).max(100),
@@ -39,13 +40,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { name, subject } = validatedData.data
+    const { name, email, phone, subject, message } = validatedData.data
 
-    // Log only non-sensitive info
     console.log(`[CONTACT] New message from "${name}" - Subject: "${subject}"`)
 
-    // TODO: Implement email sending via Nodemailer or SendGrid
-    // TODO: Save to database if needed
+    const emailSent = await sendContactFormEmail({ name, email, phone, subject, message })
+
+    if (!emailSent) {
+      return NextResponse.json(
+        { error: 'Eroare la trimiterea mesajului. Incearca din nou.' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json(
       { success: true, message: 'Mesajul a fost trimis cu succes' },

@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ShoppingCart, Menu, X, Phone, MapPin } from 'lucide-react'
-import { useCart } from '@/lib/store'
+import { useCart, useRegionStore } from '@/lib/store'
 import RegionSelector from './RegionSelector'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const { getTotalItems } = useCart()
+  const { region } = useRegionStore()
+  const logoSrc = region === 'EU' ? '/images/1024EN.png' : '/images/1024.png'
 
   useEffect(() => {
     setMounted(true)
@@ -30,8 +32,8 @@ export default function Header() {
               <Phone size={16} />
               +40 (722) 292 519
             </a>
-            <a href="mailto:office@exprestrading.com" className="hover:text-accent-400">
-              office@exprestrading.com
+            <a href="mailto:clienti@metalfence.ro" className="hover:text-accent-400">
+              clienti@metalfence.ro
             </a>
           </div>
           <div className="flex items-center gap-4">
@@ -52,7 +54,7 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             <Image
-              src="/images/1024.png"
+              src={logoSrc}
               alt="Esipca Metalica Logo"
               width={120}
               height={60}

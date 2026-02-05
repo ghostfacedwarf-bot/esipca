@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { MessageCircle, Package, LogOut, Settings, LayoutDashboard, ShoppingCart, Users, BarChart3 } from 'lucide-react'
+import { MessageCircle, Package, LogOut, Settings, LayoutDashboard, ShoppingCart, Users, BarChart3, Mail } from 'lucide-react'
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -78,6 +78,26 @@ export default function AdminDashboard() {
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">
                   Editează prețuri și descrieri produse
+                </p>
+              </div>
+            </div>
+          </Link>
+
+          {/* Newsletter */}
+          <Link
+            href="/admin/newsletter"
+            className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:border-emerald-500 hover:shadow-md transition-all group"
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center group-hover:bg-emerald-500 transition-colors">
+                <Mail className="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-slate-800 group-hover:text-emerald-600 transition-colors">
+                  Newsletter
+                </h3>
+                <p className="text-sm text-slate-500 mt-1">
+                  Gestioneaza abonati si trimite newsletter
                 </p>
               </div>
             </div>

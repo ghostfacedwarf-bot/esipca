@@ -3,9 +3,12 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Phone, Mail, MapPin, Facebook, Award, CheckCircle, Zap, Lock } from 'lucide-react'
+import { useRegionStore } from '@/lib/store'
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
+  const { region } = useRegionStore()
+  const logoSrc = region === 'EU' ? '/images/1024EN.png' : '/images/1024.png'
 
   return (
     <footer className="bg-dark-900 text-white pt-12 pb-8">
@@ -16,7 +19,7 @@ export default function Footer() {
           <div>
             <Link href="/" className="inline-block mb-4">
               <Image
-                src="/images/1024.png"
+                src={logoSrc}
                 alt="Esipca Metalica Logo"
                 width={120}
                 height={60}
@@ -104,8 +107,8 @@ export default function Footer() {
               </li>
               <li className="flex gap-2">
                 <Mail size={18} className="text-accent-400 flex-shrink-0 mt-0.5" />
-                <a href="mailto:office@exprestrading.com" className="text-dark-300 hover:text-white transition-colors">
-                  office@exprestrading.com
+                <a href="mailto:clienti@metalfence.ro" className="text-dark-300 hover:text-white transition-colors">
+                  clienti@metalfence.ro
                 </a>
               </li>
               <li className="flex gap-2">
