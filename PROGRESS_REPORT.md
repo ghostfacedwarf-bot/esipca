@@ -1,8 +1,82 @@
 # Esipca Metalica E-Commerce Site - Progress Report
 
-**Date:** 10 Ianuarie 2026
-**Project Status:** In Development - Core Features Complete
-**Next Session:** Continue from Hero Slider & Layout Refinements
+**Date:** 5 Februarie 2025
+**Project Status:** In Development - Pricing Logic & Cart Improvements Complete
+**Last Session:** Calculator Preț, Coș de Cumpărături, Admin Login
+
+---
+
+## 🆕 Sesiune 5 Februarie 2025 - Modificări Majore
+
+### Infrastructură și Bază de Date
+| Task | Status |
+|------|--------|
+| Sincronizare cod cu GitHub | ✅ Complet |
+| Migrare DB PostgreSQL → MySQL | ✅ Complet |
+| Import date producție de pe Hostinger | ✅ Complet |
+| Fix JSON.parse error pentru specs | ✅ Complet |
+| Fix MySQL LIMIT parameter issue | ✅ Complet |
+
+### Sistem de Autentificare Admin
+| Task | Status |
+|------|--------|
+| Schimbare login de la email la username | ✅ Complet |
+| Actualizare credențiale admin | ✅ Complet |
+| Fix password hash corruption | ✅ Complet |
+
+**Credențiale noi:**
+- Username: `admin`
+- Parolă: `Adminsipca12#`
+
+### Calculator Preț Produse (MAJOR)
+| Task | Status |
+|------|--------|
+| Implementare logică preț corectă | ✅ Complet |
+| Adăugare opțiune "Vopsit față/spate" | ✅ Complet |
+| Corectare valori bucinPerMetru | ✅ Complet |
+| Fix afișare surcharge (RON/ml) | ✅ Complet |
+
+**Logica de preț implementată:**
+```
+Preț per bucată = Preț bază per metru liniar × Înălțime (m)
+Supliment vopsit față/spate:
+  - MAT: +0.30 RON/ml
+  - LUCIOS: +0.10 RON/ml
+```
+
+**Valori bucinPerMetru (specificații producător):**
+| Lățime | Bucăți/metru liniar |
+|--------|---------------------|
+| 9 cm   | 10 buc/ml          |
+| 10 cm  | 9 buc/ml           |
+| 11.5 cm| 8 buc/ml           |
+
+### Coș de Cumpărături
+| Task | Status |
+|------|--------|
+| Afișare imagine produs în coș | ✅ Complet |
+| Formatare preț corect (.toFixed(2)) | ✅ Complet |
+| Afișare taxă vopsit față/spate | ✅ Complet |
+| Afișare preț bază per metru | ✅ Complet |
+
+### Comparator Produse
+| Task | Status |
+|------|--------|
+| Ascundere CompareBar pe /compara | ✅ Complet |
+
+### Fișiere Modificate Această Sesiune
+```
+app/admin/login/page.tsx          # Login cu username
+app/components/CompareBar.tsx     # Ascuns pe /compara
+app/cos/page.tsx                  # Afișare îmbunătățită coș
+app/produse/[slug]/page.tsx       # Transmite imageUrl
+app/produse/[slug]/ProductOrderForm.tsx  # Calculator preț complet
+lib/db.ts                         # Fix JSON.parse și LIMIT
+lib/store.ts                      # CartItem extins (imageUrl, pricePerMeter, doubleSidedSurcharge)
+```
+
+### Notă Importantă
+Pentru a vedea modificările în coș, utilizatorii trebuie să golească coșul vechi din localStorage și să adauge produsele din nou.
 
 ---
 
@@ -262,6 +336,7 @@ const translations: Record<string, string> = {
 
 ---
 
-**Last Updated:** 10 Ianuarie 2026, 23:00
+**Last Updated:** 5 Februarie 2025
 **Developer:** Claude Code Assistant
 **Project Location:** `C:\Users\MARIA\esipcametalica-next`
+**Dev Server:** `npm run dev` → http://localhost:3000

@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { useComparator } from '@/lib/store'
 import { X, GitCompare } from 'lucide-react'
 import Link from 'next/link'
 
 export default function CompareBar() {
   const [mounted, setMounted] = useState(false)
+  const pathname = usePathname()
   const { products, removeProduct, clearAll } = useComparator()
 
   useEffect(() => {
@@ -14,7 +16,8 @@ export default function CompareBar() {
   }, [])
 
   // Don't render until mounted to avoid hydration mismatch
-  if (!mounted || products.length === 0) return null
+  // Also hide on /compara page
+  if (!mounted || products.length === 0 || pathname === '/compara') return null
 
   return (
     <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] sm:w-auto sm:min-w-[320px] bg-white border-2 border-primary-500 rounded-xl shadow-xl z-40 animate-slide-up">

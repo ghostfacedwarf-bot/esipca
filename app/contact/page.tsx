@@ -103,8 +103,8 @@ export default function ContactPage() {
             <Mail className="text-accent-500 mx-auto mb-4" size={40} />
             <h3 className="text-xl font-bold mb-2">Email</h3>
             <p className="text-dark-600 mb-4">Răspunsuri în 24 de ore</p>
-            <a href="mailto:office@exprestrading.com" className="text-accent-600 font-semibold hover:text-accent-700">
-              office@exprestrading.com
+            <a href="mailto:clienti@metalfence.ro" className="text-accent-600 font-semibold hover:text-accent-700">
+              clienti@metalfence.ro
             </a>
           </div>
 

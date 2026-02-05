@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { ShoppingCart, Share2, AlertCircle } from 'lucide-react'
 import { useCart, CartItem, useRegionStore, getRegionalPrice } from '@/lib/store'
 import { useExchangeRate, ronToEur, formatEur } from '@/lib/useExchangeRate'
@@ -25,6 +25,7 @@ interface ProductOrderFormProps {
   discountPercent?: number
   categoryName?: string
   specs?: Record<string, any>
+  imageUrl?: string
 }
 
 export default function ProductOrderForm({
@@ -36,6 +37,7 @@ export default function ProductOrderForm({
   discountPercent = 0,
   categoryName = '',
   specs = {},
+  imageUrl,
 }: ProductOrderFormProps) {
   // Extract unique paint options from variants
   const paintOptions = Array.from(
@@ -52,12 +54,26 @@ export default function ProductOrderForm({
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null)
   const [selectedHeight, setSelectedHeight] = useState('') // Separate state for height
   const [selectedPaintOption, setSelectedPaintOption] = useState(defaultPaintOption)
+  const [doubleSided, setDoubleSided] = useState(false) // Vopsit față/spate
   const [quantity, setQuantity] = useState(1)
   const [length, setLength] = useState('1.0') // Lungime în metri (1.0m default)
   const [isLoading, setIsLoading] = useState(false)
   const { addItem } = useCart()
   const region = useRegionStore((state) => state.region)
   const { rate: eurRate } = useExchangeRate()
+
+  // Determine if product is eligible for double-sided painting
+  const paintEligibility = useMemo(() => {
+    const nameLower = productName.toLowerCase()
+    const isZincat = nameLower.includes('zincat')
+    const isStejar = nameLower.includes('stejar')
+    const isEligible = !isZincat && !isStejar
+    const isLucios = nameLower.includes('lucios')
+    // Supliment: MAT = +0.30 RON/ml, LUCIOS = +0.10 RON/ml
+    const surcharge = isLucios ? 0.10 : 0.30
+    const finishType = isLucios ? 'lucios' : 'mat'
+    return { isEligible, isLucios, surcharge, finishType }
+  }, [productName])
 
   // Apply discount to a price
   const applyDiscount = (price: number): number => {
@@ -68,23 +84,27 @@ export default function ProductOrderForm({
   // Check if discount is active
   const hasDiscount = discountPercent > 0
 
-  // Calculate base price for region (use first variant's priceEU ratio or default to double for EU)
-  const basePriceOriginal = region === 'EU'
-    ? (variants[0]?.priceEU ? (priceFrom * (variants[0].priceEU / variants[0].price)) : priceFrom * 2)
-    : priceFrom
-  const basePrice = applyDiscount(basePriceOriginal)
+  // Calculate double-sided surcharge per meter linear
+  const doubleSidedSurchargePerMeter = doubleSided && paintEligibility.isEligible ? paintEligibility.surcharge : 0
 
-  // Get regional price for a variant (with discount applied)
-  const getVariantPrice = (variant: Variant | null): number => {
-    if (!variant) return basePrice // Use regional base price when no variant selected
-    const originalPrice = getRegionalPrice(variant.price, variant.priceEU, region)
-    return applyDiscount(originalPrice)
+  // Base price per meter linear for region (EU = 2x Romania)
+  const basePricePerMeterOriginal = region === 'EU' ? priceFrom * 2 : priceFrom
+  const basePricePerMeter = applyDiscount(basePricePerMeterOriginal)
+
+  // Calculate price per piece based on height
+  // Price per piece = base price per meter × height in meters
+  const selectedHeightNum = parseFloat(selectedHeight) || 0
+
+  // Get price per piece (with discount applied)
+  const getPricePerPiece = (): number => {
+    if (!selectedHeightNum) return basePricePerMeter // Show base price when no height selected
+    return basePricePerMeter * selectedHeightNum
   }
 
-  // Get original variant price (without discount)
-  const getVariantPriceOriginal = (variant: Variant | null): number => {
-    if (!variant) return basePriceOriginal
-    return getRegionalPrice(variant.price, variant.priceEU, region)
+  // Get original price per piece (without discount)
+  const getPricePerPieceOriginal = (): number => {
+    if (!selectedHeightNum) return basePricePerMeterOriginal
+    return basePricePerMeterOriginal * selectedHeightNum
   }
 
   // Find matching variant based on height and paint option
@@ -115,16 +135,23 @@ export default function ProductOrderForm({
   const bucinPerMetru = parseInt(String(specs?.bucinPerMetru || 10), 10)
 
   // Calculate pieces needed based on length
-  const lengthNum = parseFloat(length)
-  const piecesNeeded = Math.ceil(lengthNum * bucinPerMetru * quantity)
+  const lengthNum = parseFloat(length) || 0
+  const piecesNeeded = Math.ceil(lengthNum * bucinPerMetru)
 
-  // Calculate total price: price per piece × pieces needed (using regional price)
-  // Round prices to 2 decimals to avoid floating point errors
-  const currentPrice = Math.round(getVariantPrice(selectedVariant) * 100) / 100
-  const currentPriceOriginal = Math.round(getVariantPriceOriginal(selectedVariant) * 100) / 100
-  const totalPrice = Math.round(currentPrice * piecesNeeded * 100) / 100
-  const totalPriceOriginal = Math.round(currentPriceOriginal * piecesNeeded * 100) / 100
+  // Calculate price per piece = base price per meter × height
+  // Plus double-sided surcharge per meter × height
+  const pricePerPieceBase = Math.round(getPricePerPiece() * 100) / 100
+  const pricePerPieceOriginal = Math.round(getPricePerPieceOriginal() * 100) / 100
+
+  // Double-sided surcharge is per meter linear, so multiply by height
+  const doubleSidedSurchargePerPiece = Math.round(doubleSidedSurchargePerMeter * selectedHeightNum * 100) / 100
+  const pricePerPiece = Math.round((pricePerPieceBase + doubleSidedSurchargePerPiece) * 100) / 100
+
+  // Total = price per piece × pieces needed
+  const totalPrice = Math.round(pricePerPiece * piecesNeeded * 100) / 100
+  const totalPriceOriginal = Math.round(pricePerPieceOriginal * piecesNeeded * 100) / 100
   const totalSavings = Math.round((totalPriceOriginal - totalPrice) * 100) / 100
+  const doubleSidedTotal = Math.round(doubleSidedSurchargePerPiece * piecesNeeded * 100) / 100
 
   // Group variants by attributes for better UX
   const getUniqueAttributeValues = (attributeKey: string) => {
@@ -156,32 +183,38 @@ export default function ProductOrderForm({
     setIsLoading(true)
     try {
       const paintLabel = getPaintOptionPriceAdd(selectedPaintOption) ? ` - ${selectedPaintOption}` : ''
-      const regionalPrice = getVariantPrice(selectedVariant)
+      const doubleSidedLabel = doubleSided && paintEligibility.isEligible ? ' - Vopsit față/spate' : ''
+      // Price per piece = base price per meter × height + double-sided surcharge
+      const cartPricePerPiece = pricePerPiece
       const cartItem: CartItem = {
-        id: `${productId}-${selectedVariant.id}-${region}`,
+        id: `${productId}-${selectedVariant.id}-${region}${doubleSided ? '-ds' : ''}`,
         productId,
         variantId: selectedVariant.id,
         productName,
         sku: selectedVariant.sku,
+        imageUrl,
         attributes: {
           ...selectedVariant.attributes,
           inaltime: selectedHeight,
-          optiune_vopsea: selectedPaintOption
+          optiune_vopsea: selectedPaintOption,
+          doubleSided: doubleSided && paintEligibility.isEligible,
         },
-        price: regionalPrice,
-        priceRO: selectedVariant.price,
-        priceEU: selectedVariant.priceEU,
-        quantity,
+        price: cartPricePerPiece,
+        priceRO: pricePerPieceBase + doubleSidedSurchargePerPiece,
+        priceEU: region === 'EU' ? cartPricePerPiece : cartPricePerPiece * 2,
+        pricePerMeter: basePricePerMeter,
+        doubleSidedSurcharge: doubleSidedSurchargePerPiece > 0 ? doubleSidedSurchargePerPiece : undefined,
+        quantity: piecesNeeded,
         priceType,
         region,
       }
 
       addItem(cartItem)
-      toast.success(`${productName} (${selectedHeight}m${paintLabel}) adăugat în coș!`)
+      toast.success(`${piecesNeeded} buc. ${productName} (${selectedHeight}m${paintLabel}${doubleSidedLabel}) adăugat în coș!`)
 
       // Reset form
-      setQuantity(1)
       setSelectedHeight('')
+      setLength('1.0')
     } catch (error) {
       toast.error('Eroare la adăugare în coș')
       console.error(error)
@@ -257,18 +290,18 @@ export default function ProductOrderForm({
         <div className="flex items-baseline gap-3">
           {hasDiscount && (
             <span className="text-xl text-dark-400 line-through notranslate" translate="no">
-              {basePriceOriginal.toFixed(2)}
+              {basePricePerMeterOriginal.toFixed(2)}
             </span>
           )}
           <span className="text-4xl font-bold text-primary-600 notranslate" translate="no">
-            {basePrice.toFixed(2)}
+            {basePricePerMeter.toFixed(2)}
           </span>
           <span className="text-xl text-dark-700">
-            RON/{priceType === 'per_meter' ? 'metru' : 'bucată'}
+            RON/metru liniar
           </span>
         </div>
         <p className="text-sm text-dark-500 mt-1">
-          <span className="notranslate" translate="no">~{formatEur(ronToEur(basePrice, eurRate))} EUR</span> <span className="text-xs">(curs BNR)</span>
+          <span className="notranslate" translate="no">~{formatEur(ronToEur(basePricePerMeter, eurRate))} EUR</span> <span className="text-xs">(curs BNR)</span>
         </p>
       </div>
 
@@ -287,31 +320,34 @@ export default function ProductOrderForm({
             return (
               <div key={key}>
                 <label className="block text-sm font-semibold text-dark-800 mb-3 capitalize">
-                  {key === 'inaltime' ? 'Înălțime' : key}
+                  {key === 'inaltime' ? 'Înălțime (m)' : key}
                 </label>
 
                 {isHeightAttribute ? (
-                  // Dropdown for height attribute - ONLY for Șipcă Metalică
-                  <select
-                    value={selectedHeight}
-                    onChange={(e) => {
-                      const selectedValue = e.target.value
-                      setSelectedHeight(selectedValue)
-                      updateVariant(selectedValue, selectedPaintOption)
-                    }}
-                    className="w-full px-4 py-3 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-semibold text-dark-900 notranslate"
-                    translate="no"
-                  >
-                    <option value="">Selectează o înălțime...</option>
+                  // Button grid for height - avoids Google Translate DOM issues
+                  <div className="grid grid-cols-5 sm:grid-cols-7 gap-2 notranslate" translate="no">
                     {Array.from({ length: 25 }, (_, i) => {
                       const height = (0.6 + i * 0.1).toFixed(1)
+                      const isSelected = selectedHeight === height
                       return (
-                        <option key={height} value={height} className="notranslate" translate="no">
-                          {height} m
-                        </option>
+                        <button
+                          key={height}
+                          type="button"
+                          onClick={() => {
+                            setSelectedHeight(height)
+                            updateVariant(height, selectedPaintOption)
+                          }}
+                          className={`p-2 rounded-lg font-semibold text-sm transition-all border-2 ${
+                            isSelected
+                              ? 'border-primary-600 bg-primary-500 text-white shadow-md'
+                              : 'border-dark-200 bg-white text-dark-700 hover:border-primary-400 hover:bg-primary-50'
+                          }`}
+                        >
+                          {height}
+                        </button>
                       )
                     })}
-                  </select>
+                  </div>
                 ) : (
                   // Buttons for other attributes
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -411,6 +447,31 @@ export default function ProductOrderForm({
         </div>
       )}
 
+      {/* Double-Sided Paint Option - for eligible products (not Zincat or Stejar) */}
+      {paintEligibility.isEligible && paintOptions.length <= 1 && (
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={doubleSided}
+              onChange={(e) => setDoubleSided(e.target.checked)}
+              className="mt-1 w-5 h-5 text-primary-500 focus:ring-primary-500 rounded border-slate-300"
+            />
+            <div>
+              <div className="font-medium text-slate-800">
+                Vopsit {paintEligibility.finishType} față / {paintEligibility.finishType} spate
+              </div>
+              <div className="text-sm text-blue-600 font-semibold">
+                +{paintEligibility.surcharge.toFixed(2)} RON/ml
+              </div>
+              <div className="text-xs text-slate-500 mt-1">
+                Șipca va fi vopsită pe ambele părți pentru un aspect uniform
+              </div>
+            </div>
+          </label>
+        </div>
+      )}
+
       {/* Length Input */}
       <div className="p-4 bg-white border border-dark-100 rounded-lg">
         <label className="block text-sm font-semibold text-dark-800 mb-2">
@@ -424,8 +485,7 @@ export default function ProductOrderForm({
             placeholder="Ex: 87.5"
             step="0.1"
             min="0.1"
-            className="flex-1 px-4 py-2 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-semibold text-dark-900 text-sm notranslate"
-            translate="no"
+            className="flex-1 px-4 py-2 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-semibold text-dark-900 text-sm"
           />
           <span className="text-dark-600 font-semibold text-sm">m</span>
         </div>
@@ -480,13 +540,16 @@ export default function ProductOrderForm({
               <div className="flex items-baseline gap-2">
                 {hasDiscount && (
                   <span className="text-sm text-dark-400 line-through">
-                    {getVariantPriceOriginal(selectedVariant).toFixed(2)}
+                    {pricePerPieceOriginal.toFixed(2)}
                   </span>
                 )}
                 <p className="font-bold text-primary-600">
-                  {currentPrice.toFixed(2)} RON
+                  {pricePerPiece.toFixed(2)} RON
                 </p>
               </div>
+              <p className="text-xs text-dark-500 mt-0.5">
+                ({basePricePerMeter.toFixed(2)} × {selectedHeight}m)
+              </p>
             </div>
             <div>
               <p className="text-dark-600 text-xs mb-1">Buc. necesare</p>
@@ -494,42 +557,12 @@ export default function ProductOrderForm({
                 {piecesNeeded} buc.
               </p>
               <p className="text-xs text-dark-500 mt-0.5">
-                ({lengthNum}m × {quantity} × {bucinPerMetru})
+                ({lengthNum}m × {bucinPerMetru} buc/ml)
               </p>
             </div>
           </div>
         </div>
       )}
-
-      {/* Quantity Selector */}
-      <div className="p-4 bg-white border border-dark-100 rounded-lg">
-        <label className="block text-sm font-semibold text-dark-800 mb-2">
-          Cantitate (unități)
-        </label>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setQuantity(Math.max(1, quantity - 1))}
-            className="p-2 border border-dark-200 rounded-lg hover:bg-dark-100 transition"
-            disabled={quantity <= 1}
-          >
-            −
-          </button>
-          <input
-            type="number"
-            value={quantity}
-            onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-20 px-3 py-2 border border-dark-200 rounded-lg text-center font-semibold notranslate"
-            translate="no"
-            min="1"
-          />
-          <button
-            onClick={() => setQuantity(quantity + 1)}
-            className="p-2 border border-dark-200 rounded-lg hover:bg-dark-100 transition"
-          >
-            +
-          </button>
-        </div>
-      </div>
 
       {/* Total Price Summary */}
       <div className="p-4 bg-gradient-to-br from-primary-50 to-primary-100 border border-primary-200 rounded-lg">
@@ -546,19 +579,25 @@ export default function ProductOrderForm({
             </div>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-dark-700">Preț/buc:</span>
+            <span className="text-dark-700">Preț/buc ({selectedHeight}m):</span>
             <div className="text-right">
               {hasDiscount && (
-                <span className="text-xs text-dark-400 line-through mr-1">{getVariantPriceOriginal(selectedVariant).toFixed(2)}</span>
+                <span className="text-xs text-dark-400 line-through mr-1">{pricePerPieceOriginal.toFixed(2)}</span>
               )}
-              <span className="font-semibold text-dark-900">{currentPrice.toFixed(2)} RON</span>
-              <span className="text-xs text-dark-500 ml-1">(~{formatEur(ronToEur(currentPrice, eurRate))} €)</span>
+              <span className="font-semibold text-dark-900">{pricePerPiece.toFixed(2)} RON</span>
+              <span className="text-xs text-dark-500 ml-1">(~{formatEur(ronToEur(pricePerPiece, eurRate))} €)</span>
             </div>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-dark-700">Buc. necesare:</span>
             <span className="font-semibold text-dark-900">{piecesNeeded} buc.</span>
           </div>
+          {doubleSided && doubleSidedTotal > 0 && (
+            <div className="flex justify-between items-center text-blue-700">
+              <span>Vopsit față/spate:</span>
+              <span className="font-semibold">+{doubleSidedTotal.toFixed(2)} RON</span>
+            </div>
+          )}
           <div className="border-t border-primary-300 pt-2">
             {hasDiscount && (
               <div className="flex justify-between items-center mb-1">
@@ -580,7 +619,7 @@ export default function ProductOrderForm({
             )}
             <div className="flex justify-between items-center mt-1">
               <span className="text-xs text-dark-500">
-                ({lengthNum}m × {quantity} × {bucinPerMetru} = {piecesNeeded} buc)
+                ({lengthNum}m × {bucinPerMetru} buc/ml = {piecesNeeded} buc)
               </span>
               <span className="text-sm font-semibold text-dark-600">~{formatEur(ronToEur(totalPrice, eurRate))} EUR</span>
             </div>

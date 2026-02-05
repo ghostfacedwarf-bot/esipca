@@ -37,7 +37,7 @@ async function main() {
       companyName: 'Esipca Metalica',
       companyAddress: 'Galati, DN26 Nr 19',
       companyPhone: '+40 (722) 292 519',
-      companyEmail: 'office@exprestrading.com',
+      companyEmail: 'clienti@metalfence.ro',
       freeShippingThreshold: 350,
       warrantyYears: 30,
       deliveryDays: '1-7',

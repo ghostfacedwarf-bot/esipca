@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { ArrowRight, CheckCircle, Zap, Shield, Users } from 'lucide-react'
 import HeroSlider from './components/HeroSlider'
 import FeaturedProductCard from './components/FeaturedProductCard'
+import NewsletterForm from './components/NewsletterForm'
 import { getFeaturedProducts } from '@/lib/db'
 
 // Static metadata
@@ -214,19 +215,7 @@ export default async function Home() {
             Primești oferte speciale, informații despre produse noi și sfaturi pentru construcții.
           </p>
 
-          <form className="flex gap-2">
-            <input
-              type="email"
-              placeholder="Introdu-ți emailul..."
-              className="flex-1 px-4 py-3 rounded-lg border border-dark-200 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
-            />
-            <button
-              type="submit"
-              className="btn btn-primary"
-            >
-              Abonează-te
-            </button>
-          </form>
+          <NewsletterForm />
 
           <p className="text-xs text-dark-500 text-center mt-4">
             Respectăm privacitatea ta. Poți oricând să te dezabonezi.

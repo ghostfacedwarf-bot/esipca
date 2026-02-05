@@ -144,7 +144,7 @@ CREATE TABLE IF NOT EXISTS \`Settings\` (
   \`companyName\` VARCHAR(255) DEFAULT 'Esipca Metalica',
   \`companyAddress\` VARCHAR(255) DEFAULT 'Galati, DN26 Nr 19',
   \`companyPhone\` VARCHAR(255) DEFAULT '+40 (722) 292 519',
-  \`companyEmail\` VARCHAR(255) DEFAULT 'office@exprestrading.com',
+  \`companyEmail\` VARCHAR(255) DEFAULT 'clienti@metalfence.ro',
   \`freeShippingThreshold\` FLOAT DEFAULT 350,
   \`warrantyYears\` INT DEFAULT 30,
   \`deliveryDays\` VARCHAR(50) DEFAULT '1-7',
@@ -269,7 +269,7 @@ export async function POST(request: NextRequest) {
       await connection.execute(
         `INSERT INTO Settings (id, companyName, companyAddress, companyPhone, companyEmail)
          VALUES (?, ?, ?, ?, ?)`,
-        ['default', 'Esipca Metalica', 'Galati, DN26 Nr 19', '+40 (722) 292 519', 'office@exprestrading.com']
+        ['default', 'Esipca Metalica', 'Galati, DN26 Nr 19', '+40 (722) 292 519', 'clienti@metalfence.ro']
       )
     } catch (err) {
       console.log('[INIT-DB] Settings already exist')

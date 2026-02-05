@@ -215,7 +215,7 @@ export default function WarrantyPage() {
                     Odată ce observi o problemă, contactează-ne cât mai curând. Trebuie să raportezi defectul <strong>în termen rezonabil</strong> de la descoperire. Oferă detalii clare și poze cu problema.
                   </p>
                   <p className="text-dark-600 mt-2">
-                    📧 Email: <strong>office@exprestrading.com</strong><br />
+                    📧 Email: <strong>clienti@metalfence.ro</strong><br />
                     📞 Telefon: <strong>+40 (722) 292 519</strong>
                   </p>
                 </div>
@@ -357,8 +357,8 @@ export default function WarrantyPage() {
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-dark-300 mb-2">📧 Email:</p>
-                <a href="mailto:office@exprestrading.com" className="text-accent-400 font-semibold hover:text-accent-300">
-                  office@exprestrading.com
+                <a href="mailto:clienti@metalfence.ro" className="text-accent-400 font-semibold hover:text-accent-300">
+                  clienti@metalfence.ro
                 </a>
               </div>
               <div>

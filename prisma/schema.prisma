@@ -193,7 +193,7 @@ model Settings {
   companyName         String   @default("Esipca Metalica")
   companyAddress      String   @default("Galati, DN26 Nr 19")
   companyPhone        String   @default("+40 (722) 292 519")
-  companyEmail        String   @default("office@exprestrading.com")
+  companyEmail        String   @default("clienti@metalfence.ro")
   freeShippingThreshold Float  @default(350)
   warrantyYears       Int      @default(30)
   deliveryDays        String   @default("1-7")
@@ -227,4 +227,14 @@ model ChatMessage {
   isRead          Boolean  @default(false)
 
   createdAt       DateTime @default(now())
+}
+
+// Newsletter Subscriber
+model NewsletterSubscriber {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  isActive     Boolean  @default(true)
+  subscribedAt DateTime @default(now())
+  unsubscribedAt DateTime?
 }

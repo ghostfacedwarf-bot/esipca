@@ -229,7 +229,7 @@ export default function ShippingReturnsPage() {
                     <div>
                       <h4 className="font-bold text-dark-900 mb-2">Contactează-ne în Termen</h4>
                       <p className="text-dark-600">
-                        Trebuie să ne notifici dorința de retragere în termen de <strong>14 zile</strong> de la primire. Contactează-ne prin email la <strong>office@exprestrading.com</strong> sau telefon la <strong>+40 (722) 292 519</strong>.
+                        Trebuie să ne notifici dorința de retragere în termen de <strong>14 zile</strong> de la primire. Contactează-ne prin email la <strong>clienti@metalfence.ro</strong> sau telefon la <strong>+40 (722) 292 519</strong>.
                       </p>
                     </div>
                   </div>
@@ -359,8 +359,8 @@ export default function ShippingReturnsPage() {
               <div className="space-y-4">
                 <div>
                   <p className="text-sm text-dark-300 mb-2">📧 Email:</p>
-                  <a href="mailto:office@exprestrading.com" className="text-accent-400 font-semibold hover:text-accent-300">
-                    office@exprestrading.com
+                  <a href="mailto:clienti@metalfence.ro" className="text-accent-400 font-semibold hover:text-accent-300">
+                    clienti@metalfence.ro
                   </a>
                 </div>
                 <div>

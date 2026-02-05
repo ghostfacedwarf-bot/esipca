@@ -99,7 +99,7 @@ ADMIN_EMAIL="admin@esipcametalica.ro"
 # Company Info
 NEXT_PUBLIC_COMPANY_NAME="Esipca Metalica"
 NEXT_PUBLIC_COMPANY_PHONE="+40 (722) 292 519"
-NEXT_PUBLIC_COMPANY_EMAIL="office@exprestrading.com"
+NEXT_PUBLIC_COMPANY_EMAIL="clienti@metalfence.ro"
 ```
 
 ### 3. Database Setup
@@ -344,7 +344,7 @@ This project is proprietary and confidential.
 ## Support
 
 For issues and support, contact:
-- 📧 Email: office@exprestrading.com
+- 📧 Email: clienti@metalfence.ro
 - 📞 Phone: +40 (722) 292 519
 - 📍 Location: Galati, DN26 Nr 19, Romania
 

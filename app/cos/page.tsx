@@ -15,7 +15,42 @@ interface CustomerData {
   address: string
   city: string
   postalCode: string
+  country: string
 }
+
+const EU_COUNTRIES = [
+  { code: 'AT', name: 'Austria' },
+  { code: 'BE', name: 'Belgia' },
+  { code: 'BG', name: 'Bulgaria' },
+  { code: 'HR', name: 'Croația' },
+  { code: 'CY', name: 'Cipru' },
+  { code: 'CZ', name: 'Cehia' },
+  { code: 'DK', name: 'Danemarca' },
+  { code: 'EE', name: 'Estonia' },
+  { code: 'FI', name: 'Finlanda' },
+  { code: 'FR', name: 'Franța' },
+  { code: 'DE', name: 'Germania' },
+  { code: 'GR', name: 'Grecia' },
+  { code: 'HU', name: 'Ungaria' },
+  { code: 'IE', name: 'Irlanda' },
+  { code: 'IT', name: 'Italia' },
+  { code: 'LV', name: 'Letonia' },
+  { code: 'LT', name: 'Lituania' },
+  { code: 'LU', name: 'Luxemburg' },
+  { code: 'MT', name: 'Malta' },
+  { code: 'NL', name: 'Olanda' },
+  { code: 'PL', name: 'Polonia' },
+  { code: 'PT', name: 'Portugalia' },
+  { code: 'SK', name: 'Slovacia' },
+  { code: 'SI', name: 'Slovenia' },
+  { code: 'ES', name: 'Spania' },
+  { code: 'SE', name: 'Suedia' },
+  { code: 'GB', name: 'Marea Britanie' },
+  { code: 'CH', name: 'Elveția' },
+  { code: 'NO', name: 'Norvegia' },
+  { code: 'MD', name: 'Moldova' },
+  { code: 'UA', name: 'Ucraina' },
+]
 
 export default function CartPage() {
   const router = useRouter()
@@ -30,6 +65,7 @@ export default function CartPage() {
     address: '',
     city: '',
     postalCode: '',
+    country: region === 'EU' ? '' : 'RO',
   })
   const [errors, setErrors] = useState<Partial<CustomerData>>({})
 
@@ -44,14 +80,24 @@ export default function CartPage() {
     }
   }, [region])
 
+  // Set country when region changes
+  useEffect(() => {
+    if (region === 'RO') {
+      setCustomerData(prev => ({ ...prev, country: 'RO' }))
+    } else if (customerData.country === 'RO') {
+      setCustomerData(prev => ({ ...prev, country: '' }))
+    }
+  }, [region])
+
   const validateForm = () => {
     const newErrors: Partial<CustomerData> = {}
-    if (!customerData.name.trim()) newErrors.name = 'Nama este obligatorie'
+    if (!customerData.name.trim()) newErrors.name = 'Numele este obligatoriu'
     if (!customerData.email.trim()) newErrors.email = 'Email este obligatoriu'
     if (!customerData.phone.trim()) newErrors.phone = 'Telefonul este obligatoriu'
     if (!customerData.address.trim()) newErrors.address = 'Adresa este obligatorie'
-    if (!customerData.city.trim()) newErrors.city = 'Orașului este obligatoriu'
+    if (!customerData.city.trim()) newErrors.city = 'Orașul este obligatoriu'
     if (!customerData.postalCode.trim()) newErrors.postalCode = 'Codul poștal este obligatoriu'
+    if (region === 'EU' && !customerData.country.trim()) newErrors.country = 'Țara este obligatorie'
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -86,8 +132,8 @@ export default function CartPage() {
             <a href="tel:+40722292519" className="text-primary-600 font-semibold hover:text-primary-700 block">
               📞 +40 (722) 292 519
             </a>
-            <a href="mailto:office@exprestrading.com" className="text-primary-600 font-semibold hover:text-primary-700 block">
-              📧 office@exprestrading.com
+            <a href="mailto:clienti@metalfence.ro" className="text-primary-600 font-semibold hover:text-primary-700 block">
+              📧 clienti@metalfence.ro
             </a>
           </div>
           <Link href="/produse" className="btn btn-primary mt-8 inline-block">
@@ -130,6 +176,11 @@ export default function CartPage() {
 
     setIsLoading(true)
     try {
+      // Get user's language preference for email
+      const userLanguage = typeof window !== 'undefined'
+        ? localStorage.getItem('esipca_language') || 'ro'
+        : 'ro'
+
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -137,6 +188,7 @@ export default function CartPage() {
           items,
           customer: customerData,
           totalPrice: getTotalPrice(),
+          language: userLanguage,
         }),
       })
 
@@ -233,6 +285,28 @@ export default function CartPage() {
                   {errors.address && <p className="text-red-600 text-xs mt-1">{errors.address}</p>}
                 </div>
 
+                {region === 'EU' && (
+                  <div>
+                    <label htmlFor="country" className="block text-sm font-semibold text-dark-800 mb-2">
+                      Țară *
+                    </label>
+                    <select
+                      id="country"
+                      value={customerData.country}
+                      onChange={(e) => setCustomerData({ ...customerData, country: e.target.value })}
+                      className="w-full px-4 py-2 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-dark-900 bg-white"
+                    >
+                      <option value="">Selectează țara...</option>
+                      {EU_COUNTRIES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.country && <p className="text-red-600 text-xs mt-1">{errors.country}</p>}
+                  </div>
+                )}
+
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="city" className="block text-sm font-semibold text-dark-800 mb-2">
@@ -270,9 +344,17 @@ export default function CartPage() {
               {items.map((item) => (
                 <div key={item.id} className="p-6 bg-white border border-dark-100 rounded-lg hover:shadow-md transition-shadow">
                   <div className="flex gap-6">
-                    <div className="w-24 h-24 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center text-3xl flex-shrink-0 shadow-md">
-                      <span className="text-2xl">📦</span>
-                    </div>
+                    {item.imageUrl ? (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.productName}
+                        className="w-24 h-24 object-cover rounded-lg flex-shrink-0 shadow-md"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center text-3xl flex-shrink-0 shadow-md">
+                        <span className="text-2xl">📦</span>
+                      </div>
+                    )}
 
                     <div className="flex-1">
                       <h3 className="text-lg font-bold text-dark-900 mb-2">{item.productName}</h3>
@@ -280,19 +362,36 @@ export default function CartPage() {
                         <span className="font-mono">SKU: {item.sku}</span>
                       </p>
 
-                      {Object.entries(item.attributes).length > 0 && (
-                        <div className="mb-3 text-sm text-dark-700">
-                          {Object.entries(item.attributes).map(([key, value]) => (
-                            <div key={key}>
-                              <span className="font-semibold">{key}:</span> {String(value)}
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      {/* Display relevant attributes */}
+                      <div className="mb-3 text-sm text-dark-700 space-y-1">
+                        {item.attributes.inaltime && (
+                          <div>
+                            <span className="font-semibold">Înălțime:</span> {item.attributes.inaltime} m
+                          </div>
+                        )}
+                        {item.attributes.optiune_vopsea && item.attributes.optiune_vopsea !== 'Standard' && (
+                          <div>
+                            <span className="font-semibold">Vopsea:</span> {item.attributes.optiune_vopsea}
+                          </div>
+                        )}
+                        {item.attributes.doubleSided && (
+                          <div className="text-blue-600 font-semibold">
+                            Vopsit față/spate (+{item.doubleSidedSurcharge?.toFixed(2) || '0.00'} RON/buc)
+                          </div>
+                        )}
+                      </div>
 
-                      <p className="font-bold text-primary-600">
-                        {item.price} RON/{item.priceType === 'per_meter' ? 'metru' : 'bucată'}
-                      </p>
+                      {/* Price display */}
+                      <div className="space-y-1">
+                        {item.pricePerMeter && (
+                          <p className="text-sm text-dark-500">
+                            Preț bază: {item.pricePerMeter.toFixed(2)} RON/metru
+                          </p>
+                        )}
+                        <p className="font-bold text-primary-600">
+                          {item.price.toFixed(2)} RON/bucată
+                        </p>
+                      </div>
                     </div>
 
                     <div className="flex flex-col justify-between items-end">

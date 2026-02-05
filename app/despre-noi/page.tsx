@@ -46,7 +46,7 @@ export default function AboutPage() {
                 <li><strong>CUI:</strong> RO31361919</li>
                 <li><strong>Înmatriculare:</strong> J17/307/2013</li>
                 <li><strong>Adresă:</strong> Galați, Nicolae Gamulea 12, România</li>
-                <li><strong>Email:</strong> <a href="mailto:office@exprestrading.com" className="text-primary-600 hover:underline">office@exprestrading.com</a></li>
+                <li><strong>Email:</strong> <a href="mailto:clienti@metalfence.ro" className="text-primary-600 hover:underline">clienti@metalfence.ro</a></li>
                 <li><strong>Telefon:</strong> <a href="tel:+40722292519" className="text-primary-600 hover:underline">+40 (722) 292 519</a></li>
               </ul>
             </div>

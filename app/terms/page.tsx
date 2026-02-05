@@ -145,7 +145,7 @@ export default function TermsPage() {
 
             <h3 className="text-xl font-bold mb-3 text-dark-800">Proces retur:</h3>
             <ol className="list-decimal ml-6 text-dark-700 space-y-2 mb-6">
-              <li>Contactați office@exprestrading.com cu detaliile comenzii</li>
+              <li>Contactați clienti@metalfence.ro cu detaliile comenzii</li>
               <li>Primiți instrucțiuni pentru trimiterea produsului înapoi</li>
               <li>Trimiteți produsul înapoi (costul curierului pe dvs.)</li>
               <li>După primirea și verificarea produsului, se procesează rambursarea</li>
@@ -184,7 +184,7 @@ export default function TermsPage() {
 
             <h3 className="text-xl font-bold mb-3 text-dark-800">Cum să reclamați garanție:</h3>
             <p className="text-dark-700">
-              Contactați furnizorul la office@exprestrading.com cu dovezi fotografice și detalii. Vom evalua cererea și, dacă este valabilă, vom oferi înlocuire sau reparație.
+              Contactați furnizorul la clienti@metalfence.ro cu dovezi fotografice și detalii. Vom evalua cererea și, dacă este valabilă, vom oferi înlocuire sau reparație.
             </p>
           </section>
 
@@ -249,7 +249,7 @@ export default function TermsPage() {
           <section className="mb-12">
             <h2 className="text-3xl font-bold mb-4 text-dark-900">13. Soluționarea Litigiilor</h2>
             <p className="text-dark-700 mb-4">
-              <strong>Prima opțiune:</strong> Încercăm rezolvarea amiabilă a oricăror litigii prin negociere directă. Contactați-ne la office@exprestrading.com.
+              <strong>Prima opțiune:</strong> Încercăm rezolvarea amiabilă a oricăror litigii prin negociere directă. Contactați-ne la clienti@metalfence.ro.
             </p>
             <p className="text-dark-700 mb-4">
               <strong>Legea aplicabilă:</strong> Acești termeni și condiții sunt reglementați de legile României și UE.
@@ -308,7 +308,7 @@ export default function TermsPage() {
               <p className="text-dark-800 font-semibold mb-3">SC ROMEXPRES TRADING SRL</p>
               <p className="text-dark-700 mb-2">CUI: <strong>RO31361919</strong></p>
               <p className="text-dark-700 mb-2">Înmatriculare: <strong>J17/307/2013</strong></p>
-              <p className="text-dark-700 mb-2">Email: <strong>office@exprestrading.com</strong></p>
+              <p className="text-dark-700 mb-2">Email: <strong>clienti@metalfence.ro</strong></p>
               <p className="text-dark-700 mb-2">Telefon: <strong>+40 (722) 292 519</strong></p>
               <p className="text-dark-700">Adresă: <strong>Galaţi, Nicolae Gamulea 12, România</strong></p>
             </div>

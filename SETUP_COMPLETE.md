@@ -271,7 +271,7 @@ When you seed the database, you'll have:
 **Company Info:**
 - Name: Esipca Metalica
 - Phone: +40 (722) 292 519
-- Email: office@exprestrading.com
+- Email: clienti@metalfence.ro
 - Address: Galati, DN26 Nr 19, Romania
 - Warranty: 30 years
 

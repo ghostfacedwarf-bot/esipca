@@ -51,10 +51,13 @@ export interface CartItem {
   variantId: string
   productName: string
   sku: string
+  imageUrl?: string     // Product image URL
   attributes: Record<string, any>
   price: number         // Current active price (based on region)
   priceRO: number       // Romania price
   priceEU: number | null // EU price (null = use RO price)
+  pricePerMeter?: number // Base price per meter (for display)
+  doubleSidedSurcharge?: number // Surcharge per piece for double-sided paint
   quantity: number
   priceType: string
   region: Region        // Region when item was added

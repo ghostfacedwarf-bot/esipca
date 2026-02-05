@@ -125,6 +125,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               discountPercent={Number(product.discountPercent) || 0}
               categoryName={product.category.name}
               specs={product.specs as any}
+              imageUrl={product.media?.[0]?.url}
             />
 
             {/* Trust signals */}

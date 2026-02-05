@@ -41,7 +41,7 @@ export default function PrivacyPage() {
               <li>CUI: RO31361919</li>
               <li>Înmatriculare: J17/307/2013</li>
               <li>Adresă: Galaţi, Nicolae Gamulea 12, România</li>
-              <li>Email: office@exprestrading.com</li>
+              <li>Email: clienti@metalfence.ro</li>
               <li>Telefon: +40 (722) 292 519</li>
             </ul>
           </section>
@@ -162,7 +162,7 @@ export default function PrivacyPage() {
 
             <h3 className="text-xl font-bold mb-3 mt-6 text-dark-800">Cum să vă exercitați drepturile:</h3>
             <p className="text-dark-700">
-              Pentru a exercita orice dintre aceste drepturi, contactați-ne la <strong>office@exprestrading.com</strong> sau <strong>+40 (722) 292 519</strong>.
+              Pentru a exercita orice dintre aceste drepturi, contactați-ne la <strong>clienti@metalfence.ro</strong> sau <strong>+40 (722) 292 519</strong>.
               Vă vom răspunde în termen de 30 de zile conform GDPR.
             </p>
           </section>
@@ -200,7 +200,7 @@ export default function PrivacyPage() {
             <div className="bg-primary-50 p-6 rounded-lg mb-6">
               <p className="text-dark-800 font-semibold mb-3">SC ROMEXPRES TRADING SRL</p>
               <p className="text-dark-700 mb-2">CUI: <strong>RO31361919</strong></p>
-              <p className="text-dark-700 mb-2">Email: <strong>office@exprestrading.com</strong></p>
+              <p className="text-dark-700 mb-2">Email: <strong>clienti@metalfence.ro</strong></p>
               <p className="text-dark-700 mb-2">Telefon: <strong>+40 (722) 292 519</strong></p>
               <p className="text-dark-700">Adresă: <strong>Galaţi, Nicolae Gamulea 12, România</strong></p>
             </div>

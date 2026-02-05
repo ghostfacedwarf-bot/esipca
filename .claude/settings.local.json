@@ -39,7 +39,16 @@
       "Bash(ping:*)",
       "Bash(npx tsx:*)",
       "Bash(node -e:*)",
-      "Bash(npm version:*)"
+      "Bash(npm version:*)",
+      "Bash(netstat:*)",
+      "Bash(cmd //c \"taskkill /PID 54784 /F\")",
+      "Bash(find:*)",
+      "Bash(npx prisma db push:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(exit:*)",
+      "Bash(cmd /c \"tasklist /FI \"\"IMAGENAME eq node.exe\"\"\")",
+      "Bash(cmd /c \"del /f nul\")",
+      "Bash(cmd /c \"del /f public\\\\nul\")"
     ]
   }
 }

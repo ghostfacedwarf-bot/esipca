@@ -122,7 +122,7 @@ export async function getProductBySlug(slug: string) {
 
       return {
         ...product,
-        specs: product.specs ? JSON.parse(product.specs) : null,
+        specs: product.specs ? (typeof product.specs === 'string' ? JSON.parse(product.specs) : product.specs) : null,
         category: {
           id: product.categoryId,
           name: product.categoryName,
@@ -130,7 +130,7 @@ export async function getProductBySlug(slug: string) {
         },
         variants: (variants as any[]).map((v) => ({
           ...v,
-          attributes: v.attributes ? JSON.parse(v.attributes) : null,
+          attributes: v.attributes ? (typeof v.attributes === 'string' ? JSON.parse(v.attributes) : v.attributes) : null,
         })),
         media: media as any[],
         reviews: reviews as any[],
@@ -196,7 +196,7 @@ export async function getAllProducts() {
 
       return (products as any[]).map((p) => ({
         ...p,
-        specs: p.specs ? JSON.parse(p.specs) : null,
+        specs: p.specs ? (typeof p.specs === 'string' ? JSON.parse(p.specs) : p.specs) : null,
         category: { name: p.categoryName },
         media: mediaMap[p.id] || [],
       }))
@@ -241,8 +241,7 @@ export async function getFeaturedProducts(limit: number = 3) {
          LEFT JOIN Category c ON p.categoryId = c.id
          WHERE p.isActive = true
          ORDER BY RAND()
-         LIMIT ?`,
-        [limit]
+         LIMIT ${Number(limit)}`
       )
 
       // Get media for these products
@@ -265,7 +264,7 @@ export async function getFeaturedProducts(limit: number = 3) {
 
       return (products as any[]).map((p) => ({
         ...p,
-        specs: p.specs ? JSON.parse(p.specs) : null,
+        specs: p.specs ? (typeof p.specs === 'string' ? JSON.parse(p.specs) : p.specs) : null,
         category: { name: p.categoryName },
         media: mediaMap[p.id] || [],
       }))

@@ -232,13 +232,20 @@ export default function GoogleTranslator() {
     const select = document.querySelector('.goog-te-combo') as HTMLSelectElement
     console.log('[GoogleTranslator] selectLanguage called:', langCode, 'select element:', select)
     if (select) {
+      // Save user's preference BEFORE changing language
+      localStorage.setItem(LANGUAGE_DETECTED_KEY, 'true')
+      localStorage.setItem(LANGUAGE_PREFERENCE_KEY, langCode)
+
       select.value = langCode
       select.dispatchEvent(new Event('change', { bubbles: true }))
       setCurrentLang(langCode)
-      // Save user's manual preference
-      localStorage.setItem(LANGUAGE_DETECTED_KEY, 'true')
-      localStorage.setItem(LANGUAGE_PREFERENCE_KEY, langCode)
       console.log('[GoogleTranslator] Language changed to:', langCode)
+
+      // Reload page after a short delay to let Google Translate apply changes
+      // This prevents React DOM reconciliation errors
+      setTimeout(() => {
+        window.location.reload()
+      }, 500)
     } else {
       console.error('[GoogleTranslator] .goog-te-combo element not found!')
     }
