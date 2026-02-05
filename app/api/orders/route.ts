@@ -84,7 +84,15 @@ export async function POST(request: NextRequest) {
     // Send confirmation emails
     const emailResults = await sendOrderEmails({
       orderId: order.id,
-      customer,
+      customer: {
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        address: customer.address,
+        city: customer.city,
+        postalCode: customer.postalCode,
+        country: customer.country,
+      },
       items: items.map((item) => ({
         productName: item.productName,
         variantName: item.variantName,
