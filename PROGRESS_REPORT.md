@@ -1,19 +1,112 @@
 # Esipca Metalica E-Commerce Site - Progress Report
 
-**Date:** 5 Februarie 2025
-**Project Status:** In Development - Pricing Logic & Cart Improvements Complete
-**Last Session:** Calculator Preț, Coș de Cumpărături, Admin Login
+**Date:** 5 Februarie 2026
+**Project Status:** In Development - Newsletter, Contact Form, Logo Dinamic
+**Last Session:** Admin Newsletter, Contact Form Functional, Logo RO/EU, Build Fix
 
 ---
 
-## 🆕 Sesiune 5 Februarie 2025 - Modificări Majore
+## 🆕 Sesiune 5 Februarie 2026 - Modificari Recente
 
-### Infrastructură și Bază de Date
+### 1. Admin Newsletter System (NOU)
+| Task | Status |
+|------|--------|
+| Pagina `/admin/newsletter` cu tab-uri | ✅ Complet |
+| Tab Abonati - tabel cu stats | ✅ Complet |
+| Tab Trimite Newsletter - editor cu design | ✅ Complet |
+| API admin newsletter (GET/POST/DELETE) | ✅ Complet |
+| Auth check pe API `/api/admin/newsletter` | ✅ Complet |
+| Card Newsletter in Dashboard | ✅ Complet |
+
+**Functionalitati:**
+- **Tab Abonati**: Tabel cu email, nume, data abonarii, status (activ/dezabonat), buton dezabonare manuala, stats (total/activi/dezabonati)
+- **Tab Trimite Newsletter**: Editor subiect + continut, optiuni design (culoare header, titlu, logo toggle, banner image, buton CTA cu culori), preview live pixel-perfect, trimitere in masa cu confirmare
+- **Design Options**: 6 preseturi culoare header (Albastru, Auriu, Verde, Rosu, Violet, Negru), toggle logo, URL banner, buton CTA cu 5 culori
+
+**Fisiere create:**
+```
+app/admin/newsletter/page.tsx       # Pagina admin newsletter
+app/api/admin/newsletter/route.ts   # API admin newsletter
+```
+
+**Fisiere modificate:**
+```
+app/admin/dashboard/page.tsx        # Card Newsletter activ (emerald)
+lib/email.ts                        # sendNewsletter() + buildNewsletterHtml()
+```
+
+### 2. Formular Contact Functional (FIX)
+| Task | Status |
+|------|--------|
+| Trimitere email la completare formular | ✅ Complet |
+| Template HTML profesional | ✅ Complet |
+| Buton "Raspunde" in email | ✅ Complet |
+| ReplyTo setat pe emailul clientului | ✅ Complet |
+
+**Inainte:** Formularul "Trimite-ne un Mesaj" de pe `/contact` era un stub - logarea in consola, userul primea "succes" fals, emailul NU se trimitea.
+
+**Acum:** La completare se trimite email profesional la `clienti@metalfence.ro` cu:
+- Tipul cererii (subiectul) in header violet
+- Numele, email (mailto: link), telefon (tel: link)
+- Mesajul complet in box dedicat
+- Buton "Raspunde la [Nume]" care deschide email client
+- `replyTo` setat pe emailul clientului
+
+**Fisiere modificate:**
+```
+app/api/contact/route.ts            # Import + apel sendContactFormEmail()
+lib/email.ts                        # sendContactFormEmail() adaugat
+```
+
+### 3. Logo Dinamic RO/EU
+| Task | Status |
+|------|--------|
+| Logo `1024EN.png` pentru vizitatori non-RO | ✅ Complet |
+| Header - logo dinamic pe baza regiunii | ✅ Complet |
+| Footer - logo dinamic pe baza regiunii | ✅ Complet |
+| Emailuri - logo pe baza limbii | ✅ Complet |
+
+**Logica:**
+| Context | Romania | Europa / Restul lumii |
+|---------|---------|----------------------|
+| Header | `1024.png` | `1024EN.png` |
+| Footer | `1024.png` | `1024EN.png` |
+| Email confirmare comanda client | `1024.png` (limba=ro) | `1024EN.png` (limba!=ro) |
+| Email notificare admin | `1024.png` (mereu) | `1024.png` (mereu) |
+| Newsletter | `1024.png` (mereu) | `1024.png` (mereu) |
+| Email contact form | `1024.png` (mereu) | `1024.png` (mereu) |
+
+**Fisiere modificate:**
+```
+app/components/Header.tsx           # useRegionStore + logoSrc dinamic
+app/components/Footer.tsx           # useRegionStore + logoSrc dinamic
+lib/email.ts                        # getLogoUrl(language) helper
+public/images/1024EN.png            # Logo EN (nou)
+```
+
+### 4. Build Fix - TypeScript Error
+| Task | Status |
+|------|--------|
+| Fix CustomerData type mismatch | ✅ Complet |
+
+**Problema:** Zod `.optional().default()` infera proprietati optionale dupa `safeParse`, dar `CustomerData` cerea proprietati obligatorii. Build-ul esua cu type error pe `app/api/orders/route.ts:87`.
+
+**Solutie:** Mapare explicita a campurilor validate catre interfata `CustomerData`.
+
+```
+app/api/orders/route.ts             # customer object explicit mapping
+```
+
+---
+
+## 📊 Sesiune Anterioara - 5 Februarie 2025
+
+### Infrastructura si Baza de Date
 | Task | Status |
 |------|--------|
 | Sincronizare cod cu GitHub | ✅ Complet |
 | Migrare DB PostgreSQL → MySQL | ✅ Complet |
-| Import date producție de pe Hostinger | ✅ Complet |
+| Import date productie de pe Hostinger | ✅ Complet |
 | Fix JSON.parse error pentru specs | ✅ Complet |
 | Fix MySQL LIMIT parameter issue | ✅ Complet |
 
@@ -21,322 +114,128 @@
 | Task | Status |
 |------|--------|
 | Schimbare login de la email la username | ✅ Complet |
-| Actualizare credențiale admin | ✅ Complet |
+| Actualizare credentiale admin | ✅ Complet |
 | Fix password hash corruption | ✅ Complet |
 
-**Credențiale noi:**
-- Username: `admin`
-- Parolă: `Adminsipca12#`
-
-### Calculator Preț Produse (MAJOR)
+### Calculator Pret Produse
 | Task | Status |
 |------|--------|
-| Implementare logică preț corectă | ✅ Complet |
-| Adăugare opțiune "Vopsit față/spate" | ✅ Complet |
+| Implementare logica pret corecta | ✅ Complet |
+| Adaugare optiune "Vopsit fata/spate" | ✅ Complet |
 | Corectare valori bucinPerMetru | ✅ Complet |
-| Fix afișare surcharge (RON/ml) | ✅ Complet |
+| Fix afisare surcharge (RON/ml) | ✅ Complet |
 
-**Logica de preț implementată:**
-```
-Preț per bucată = Preț bază per metru liniar × Înălțime (m)
-Supliment vopsit față/spate:
-  - MAT: +0.30 RON/ml
-  - LUCIOS: +0.10 RON/ml
-```
-
-**Valori bucinPerMetru (specificații producător):**
-| Lățime | Bucăți/metru liniar |
-|--------|---------------------|
-| 9 cm   | 10 buc/ml          |
-| 10 cm  | 9 buc/ml           |
-| 11.5 cm| 8 buc/ml           |
-
-### Coș de Cumpărături
+### Cos de Cumparaturi
 | Task | Status |
 |------|--------|
-| Afișare imagine produs în coș | ✅ Complet |
-| Formatare preț corect (.toFixed(2)) | ✅ Complet |
-| Afișare taxă vopsit față/spate | ✅ Complet |
-| Afișare preț bază per metru | ✅ Complet |
-
-### Comparator Produse
-| Task | Status |
-|------|--------|
-| Ascundere CompareBar pe /compara | ✅ Complet |
-
-### Fișiere Modificate Această Sesiune
-```
-app/admin/login/page.tsx          # Login cu username
-app/components/CompareBar.tsx     # Ascuns pe /compara
-app/cos/page.tsx                  # Afișare îmbunătățită coș
-app/produse/[slug]/page.tsx       # Transmite imageUrl
-app/produse/[slug]/ProductOrderForm.tsx  # Calculator preț complet
-lib/db.ts                         # Fix JSON.parse și LIMIT
-lib/store.ts                      # CartItem extins (imageUrl, pricePerMeter, doubleSidedSurcharge)
-```
-
-### Notă Importantă
-Pentru a vedea modificările în coș, utilizatorii trebuie să golească coșul vechi din localStorage și să adauge produsele din nou.
+| Afisare imagine produs in cos | ✅ Complet |
+| Formatare pret corect (.toFixed(2)) | ✅ Complet |
+| Afisare taxa vopsit fata/spate | ✅ Complet |
+| Afisare pret baza per metru | ✅ Complet |
 
 ---
 
 ## 📊 Project Overview
 
 Esipca Metalica is a Next.js e-commerce platform for selling:
-- Șipcă Metalică (Metal sheeting for fences)
-- Tablă Zincată (Galvanized sheets)
+- Sipca Metalica (Metal sheeting for fences)
+- Tabla Zincata (Galvanized sheets)
 - Jgheaburi (Gutters and drainage systems)
 
 **Tech Stack:**
-- Next.js 15 with App Router
+- Next.js 16.1.3 with App Router (Turbopack)
 - React 19
-- TypeScript
+- TypeScript (strict)
 - Tailwind CSS
-- PostgreSQL + Prisma ORM
+- MySQL + Prisma ORM (Hostinger)
+- Nodemailer (SMTP Hostinger)
+- Zustand (state management)
+- Zod (validation)
 - Lucide React icons
+- Google Translate API (auto-detect limba)
+
+**Hosting:** Hostinger VPS
+**Domain:** metalfence.ro
+**Repo:** github.com/ghostfacedwarf-bot/esipca.git
 
 ---
 
-## ✅ Completed Features (Session: January 9-10, 2026)
+## 🎯 Stare Curenta Aplicatie
 
-### 1. **Hero Slider Component** ✓
-- **File:** `app/components/HeroSlider.tsx` (Created)
-- **Features:**
-  - 3 rotating slides with 5-second auto-rotation
-  - Manual navigation (prev/next buttons)
-  - Dot indicators with click-to-slide functionality
-  - Slide counter (e.g., "1 / 3")
-  - Support for single background image (`bgImage`) or multiple images (`bgImages`)
-  - Semi-transparent overlay (opacity-60) for text readability
-  - Animated background patterns for slides without images
-  - Responsive design (full width, adjustable height)
+### ✅ Features Functionale:
+1. Hero slider cu continut promotional rotativ
+2. Catalog produse cu categorii (3 categorii principale)
+3. Pagini detalii produs cu formulare de comanda
+4. Selectie variante cu pricing dinamic
+5. Calculator pret (per metru, inaltime, vopsit fata/spate)
+6. Cos de cumparaturi complet (adaugare, stergere, cantitate)
+7. Sistem comenzi cu email confirmare (client + admin)
+8. **Formular contact functional cu email** ✅ NOU
+9. **Admin Newsletter - gestionare abonati + trimitere** ✅ NOU
+10. **Logo dinamic RO/EU** ✅ NOU
+11. Admin Dashboard cu sectiuni: Chat, Produse, Newsletter
+12. Admin Chat (live chat cu vizitatorii)
+13. Admin Produse (editare preturi si descrieri)
+14. Sistem regiuni (RO/EU) cu preturi diferentiate
+15. Google Translate auto-detect pe baza IP
+16. Newsletter subscribe form (public)
+17. Rate limiting pe API-uri
+18. Responsive design (mobile-first)
+19. Font Montserrat profesional
+20. Comparator produse
 
-- **Slides Configured:**
-  1. **Șipcă Metalică Premium** - Single background image
-  2. **Tablă Zincată de Calitate** - Two side-by-side product images (flexbox layout)
-  3. **30+ Ani de Experiență** - Single background image
+### 🔌 Emailuri Functionale:
+| Email | Trigger | Destinatar |
+|-------|---------|------------|
+| Confirmare comanda | Plasare comanda | Client |
+| Notificare comanda | Plasare comanda | Admin |
+| Formular contact | Completare form | Admin |
+| Newsletter bulk | Admin trimite | Toti abonati activi |
 
-### 2. **Professional Typography** ✓
-- **Font:** Montserrat (300, 400, 500, 600, 700, 800, 900 weights)
-- **Implementation:**
-  - Added Google Fonts import in `app/globals.css`
-  - Updated `tailwind.config.ts` to use Montserrat as default sans font
-  - Applied globally across all components
-
-### 3. **Compact Layout** ✓
-- **Modified Files:**
-  - `app/produse/[slug]/page.tsx`
-  - `app/produse/[slug]/ProductOrderForm.tsx`
-
-- **Changes Made:**
-  - Reduced vertical padding: `py-12 → py-8`, `py-20 → py-8`
-  - Reduced horizontal gaps: `gap-12 → gap-8`
-  - Reduced margins: `mb-6 → mb-3`, `mb-8 → mb-4`, etc.
-  - Compacted container padding: `p-6 → p-4`, `p-6 → p-3`
-  - Reduced spacing between form elements: `space-y-6 → space-y-3`
-  - Smaller text sizes: Added `text-sm` to specification labels
-  - Specification display: `p-4 → p-2` padding
-
-### 4. **Specification Labels Translation & Formatting** ✓
-- **File:** `app/produse/[slug]/page.tsx`
-- **Implementation:**
-  - Created translation mapping for database field names to Romanian labels
-  - Applied capitalization to unmapped fields
-  - Removed unnecessary fields: `discount`, `prețOriginal`
-
-- **Translated Labels:**
-  - `latime` → Lățime
-  - `profil` → Profil
-  - `culoare` → Culoare
-  - `finisaj` → Finisaj
-  - `grosime` → Grosime
-  - `material` → Material
-  - `bucinPerMetru` → Bucăți/Metru
-
-### 5. **Product Images for Hero Slider** ✓
-- **Downloaded & Saved to `public/images/hero/`:**
-  - `sipca-1.jpg` - 258 KB (Șipcă Metalică)
-  - `tabla-1.jpg` - 178 KB (Tablă Zincată - Product 1)
-  - `tabla-2.jpg` - 170 KB (Tablă Zincată - Product 2)
-  - `experienta.jpg` - 112 KB (Experience/Heritage)
-
-### 6. **Company Logo Added to Header** ✓
-- **File:** `app/components/Header.tsx` (Modified)
-- **Implementation:**
-  - Imported Next.js Image component
-  - Replaced text logo with image: `/public/images/1024.png`
-  - Optimized with `priority` prop for LCP
-  - Responsive sizing: `h-16 w-auto object-contain`
-  - Logo links to home page
-
----
-
-## 🔧 Technical Implementation Details
-
-### Hero Slider Code Structure
-```typescript
-// app/components/HeroSlider.tsx
-- Uses useState for slide tracking (current)
-- Uses useEffect for auto-rotation (5000ms interval)
-- Autoplay pauses on user interaction (button clicks)
-- Autoplay resumes on mouse leave
-- Supports two background types:
-  1. Single image: style.backgroundImage
-  2. Multiple images: flexbox with flex-1 distribution
+### 📁 Structura Admin:
 ```
-
-### Specification Label Translation
-```typescript
-// In app/produse/[slug]/page.tsx
-const translations: Record<string, string> = {
-  latime: 'Lățime',
-  profil: 'Profil',
-  culoare: 'Culoare',
-  finisaj: 'Finisaj',
-  grosime: 'Grosime',
-  material: 'Material',
-  bucinPerMetru: 'Bucăți/Metru',
-}
-```
-
-### Multi-Image Layout for Tabla Slide
-```typescript
-// Two images side-by-side using flexbox
-{slide.bgImages && (
-  <div className="absolute inset-0 flex">
-    {slide.bgImages.map((img, idx) => (
-      <div key={idx} className="flex-1" style={{backgroundImage: `url('${img}')`}} />
-    ))}
-  </div>
-)}
+/admin/login          # Autentificare
+/admin/dashboard      # Dashboard cu carduri
+/admin/chat           # Chat cu vizitatorii
+/admin/products       # Editare produse
+/admin/newsletter     # Abonati + trimitere newsletter (NOU)
 ```
 
 ---
 
-## 📁 Files Modified/Created
+## 📋 Sarcini Ramase / Viitoare
 
-### Created Files:
-- ✅ `app/components/HeroSlider.tsx`
-- ✅ `public/images/hero/sipca-1.jpg`
-- ✅ `public/images/hero/tabla-1.jpg`
-- ✅ `public/images/hero/tabla-2.jpg`
-- ✅ `public/images/hero/experienta.jpg`
-- ✅ `PROGRESS_REPORT.md` (This file)
+### Prioritate Inalta:
+- [ ] Admin Comenzi - vizualizare si gestionare comenzi
+- [ ] Salvare comenzi in baza de date (momentan doar email)
+- [ ] Admin Statistici - rapoarte vanzari
 
-### Modified Files:
-- ✅ `app/page.tsx` - Integrated HeroSlider component
-- ✅ `app/components/Header.tsx` - Added logo image
-- ✅ `app/produse/[slug]/page.tsx` - Compact layout, spec translations
-- ✅ `app/produse/[slug]/ProductOrderForm.tsx` - Compact form spacing
-- ✅ `app/globals.css` - Added Montserrat font import
-- ✅ `tailwind.config.ts` - Set Montserrat as default font
-- ✅ `prisma/seed-final.ts` - Removed discount fields from specs
+### Prioritate Medie:
+- [ ] Galerie imagini pe paginile de produs
+- [ ] Sistem de review-uri/recenzii
+- [ ] Filtrare si sortare produse
+- [ ] Cautare produse
+- [ ] Optimizare imagini cu next/image pentru toate produsele
 
----
-
-## 🎯 Current Application State
-
-### ✅ Working Features:
-1. Hero slider with rotating promotional content
-2. Product showcase with categories (3 main categories visible)
-3. Featured products section with pricing
-4. Product detail pages with order forms
-5. Variant selection with dynamic pricing
-6. Length input (accepts decimal values like 87.5m)
-7. Height selection dropdown for Șipcă Metalică
-8. Professional Montserrat typography throughout
-9. Compact, clean layout
-10. Company logo in header
-11. Trust signals section (delivery, warranty, consultation)
-12. Newsletter subscription form
-13. Contact information in header (phone, email, location)
-
-### 🔌 Database Connected Features:
-- Product listings from Prisma
-- Dynamic metadata generation
-- Review system integration
-- Variant management
+### Prioritate Scazuta:
+- [ ] Admin Utilizatori - gestionare conturi
+- [ ] Admin Setari - configurare generala
+- [ ] Sistem tracking comenzi
+- [ ] PWA / Service Worker
 
 ---
 
-## 🚀 Performance Optimizations Applied
+## 🔍 Probleme Cunoscute
 
-1. **Image Optimization:**
-   - Logo uses `priority` prop in Header for LCP optimization
-   - Hero slider images use `backgroundImage` CSS property (faster than img tags)
-
-2. **Font Optimization:**
-   - Montserrat loaded via Google Fonts with specific weights
-   - Reduced font file sizes by only loading needed weights
-
-3. **Component Efficiency:**
-   - Hero slider auto-rotation properly cleaned up with useEffect return
-   - Conditional rendering of image types (single vs. multiple)
+1. **Fisiere `nul`**: Artifact Windows in root si `public/` - nu pot fi adaugate in git (nume rezervat Windows). Ignora-le.
+2. **Deprecation warnings npm**: `inflight`, `rimraf`, `glob`, `eslint@8` - nu afecteaza functionalitatea, update la versiuni noi la urmatorul refactoring major.
+3. **19 vulnerabilitati npm**: Majority din dependinte indirecte. `npm audit fix` pentru cele non-breaking.
 
 ---
 
-## 📋 Remaining/Future Tasks
-
-### Potential Improvements:
-- [ ] Add product image galleries to detail pages
-- [ ] Implement shopping cart functionality
-- [ ] Add user authentication/accounts
-- [ ] Create admin dashboard for product management
-- [ ] Add product filters and sorting to listings
-- [ ] Implement search functionality
-- [ ] Add testimonials/reviews section
-- [ ] Create "About Us" detailed page
-- [ ] Optimize images further with next/image for all products
-- [ ] Add SEO metadata for all pages
-- [ ] Implement email notifications for orders
-- [ ] Create order tracking system
-
----
-
-## 🔍 Known Issues / Considerations
-
-1. **Newsletter Form:** Currently has no backend implementation - needs API endpoint
-2. **Product Images:** Still using emojis as placeholders - should replace with real product photos
-3. **Shopping Cart:** Badge shows "0" - needs state management implementation
-4. **Responsive Design:** Mobile menu works but could use further testing
-5. **About Page:** Only basic structure, needs full content
-
----
-
-## 💡 Session Summary
-
-**What Was Accomplished:**
-- Transformed site from basic template to visually appealing e-commerce platform
-- Added professional hero slider matching competitor (esipcametalica.ro)
-- Improved typography with Montserrat font
-- Compacted layout removing excessive whitespace
-- Properly translated and formatted product specifications
-- Integrated company logo
-
-**Performance Impact:**
-- Page feels faster and more responsive
-- Better use of vertical space
-- Professional visual hierarchy with proper typography
-
-**User Experience Improvements:**
-- Clearer visual flow with hero slider
-- More compact information presentation
-- Better professional appearance
-
----
-
-## 🌅 Next Morning Checklist
-
-- [ ] Review this progress report
-- [ ] Check dev server: `npm run dev` (port 3001)
-- [ ] Verify all hero slider images load correctly
-- [ ] Test responsive design on mobile
-- [ ] Consider next feature priority from "Remaining Tasks" section
-- [ ] Check for any new bugs or spacing issues
-
----
-
-**Last Updated:** 5 Februarie 2025
-**Developer:** Claude Code Assistant
-**Project Location:** `C:\Users\MARIA\esipcametalica-next`
-**Dev Server:** `npm run dev` → http://localhost:3000
+**Last Updated:** 5 Februarie 2026
+**Git:** `master` branch, pushed to origin
+**Last Commits:**
+- `1a4dcf9` fix: Resolve CustomerData type mismatch in orders route
+- `e5a30ad` chore: Commit all remaining project changes
+- `5e4f63d` feat: Add admin newsletter, functional contact form, and region-based logo
