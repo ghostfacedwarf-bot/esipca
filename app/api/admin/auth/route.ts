@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
+import { randomBytes } from 'crypto'
 import prisma from '@/lib/prisma'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
@@ -52,9 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create session token using cryptographic randomness
-    const tokenBytes = new Uint8Array(32)
-    crypto.getRandomValues(tokenBytes)
-    const sessionToken = Array.from(tokenBytes, (b) => b.toString(16).padStart(2, '0')).join('')
+    const sessionToken = randomBytes(32).toString('hex')
     const expires = new Date(Date.now() + SESSION_DURATION)
 
     // Set cookie

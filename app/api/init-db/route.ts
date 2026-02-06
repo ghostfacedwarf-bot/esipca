@@ -288,9 +288,10 @@ export async function POST(request: NextRequest) {
         const adminPassword = process.env.ADMIN_PASSWORD || 'admin'
         const hashedPassword = await bcrypt.hash(adminPassword, 12)
 
+        const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
         await connection.execute(
-          'INSERT INTO `User` (id, email, password, name, role) VALUES (?, ?, ?, ?, ?)',
-          [cuid(), adminEmail, hashedPassword, 'Administrator', 'admin']
+          'INSERT INTO `User` (id, email, password, name, role, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [cuid(), adminEmail, hashedPassword, 'Administrator', 'admin', now, now]
         )
         console.log(`[INIT-DB] ✅ Admin user created (email: ${adminEmail})`)
       } else {
