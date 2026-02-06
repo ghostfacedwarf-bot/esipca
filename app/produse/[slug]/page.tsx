@@ -3,9 +3,10 @@ import { notFound } from 'next/navigation'
 import { ArrowRight } from 'lucide-react'
 import ProductOrderForm from './ProductOrderForm'
 import ProductGallery from './ProductGallery'
+import ReviewSection from './ReviewSection'
 
-// Mark as dynamic - fetch product at runtime
-export const dynamic = 'force-dynamic'
+// ISR - revalidate every 60 seconds
+export const revalidate = 60
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -35,8 +36,42 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     notFound()
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://esipcametalica.ro'
+
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.shortDescription || product.longDescription || '',
+    image: product.media?.[0]?.url ? `${siteUrl}${product.media[0].url}` : undefined,
+    sku: product.variants?.[0]?.sku || undefined,
+    brand: {
+      '@type': 'Brand',
+      name: 'Esipca Metalica',
+    },
+    category: product.category.name,
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'RON',
+      price: product.priceFrom ? Number(product.priceFrom) : undefined,
+      availability: product.variants?.[0]?.stockStatus === 'in_stock'
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/PreOrder',
+      seller: {
+        '@type': 'Organization',
+        name: 'Esipca Metalica',
+      },
+    },
+  }
+
   return (
     <main>
+      {/* Product Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
+
       {/* Breadcrumb */}
       <div className="bg-dark-50 border-b border-dark-100 py-4">
         <div className="container-max text-sm text-dark-600">
@@ -166,6 +201,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </section>
       )}
 
+      {/* Reviews */}
+      <ReviewSection productId={product.id} productName={product.name} />
 
       {/* Related products CTA */}
       <section className="py-8 bg-primary-600 text-white">

@@ -325,7 +325,7 @@ export default function ProductOrderForm({
 
                 {isHeightAttribute ? (
                   // Button grid for height - avoids Google Translate DOM issues
-                  <div className="grid grid-cols-5 sm:grid-cols-7 gap-2 notranslate" translate="no">
+                  <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-2 notranslate" translate="no">
                     {Array.from({ length: 25 }, (_, i) => {
                       const height = (0.6 + i * 0.1).toFixed(1)
                       const isSelected = selectedHeight === height
@@ -337,7 +337,7 @@ export default function ProductOrderForm({
                             setSelectedHeight(height)
                             updateVariant(height, selectedPaintOption)
                           }}
-                          className={`p-2 rounded-lg font-semibold text-sm transition-all border-2 ${
+                          className={`p-2.5 min-h-[44px] rounded-lg font-semibold text-sm transition-all border-2 ${
                             isSelected
                               ? 'border-primary-600 bg-primary-500 text-white shadow-md'
                               : 'border-dark-200 bg-white text-dark-700 hover:border-primary-400 hover:bg-primary-50'

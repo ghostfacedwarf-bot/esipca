@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /cos
+
+Sitemap: https://esipcametalica.ro/sitemap.xml

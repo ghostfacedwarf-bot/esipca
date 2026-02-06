@@ -101,6 +101,14 @@ export async function POST(request: NextRequest) {
 
 // Get all subscribers (admin only)
 export async function GET(request: NextRequest) {
+  // Auth check - only admin can list subscribers
+  const { cookies: getCookies } = await import('next/headers')
+  const cookieStore = await getCookies()
+  const session = cookieStore.get('admin_session')
+  if (!session) {
+    return NextResponse.json({ message: 'Neautorizat' }, { status: 401 })
+  }
+
   let connection: mysql.Connection | null = null
 
   try {

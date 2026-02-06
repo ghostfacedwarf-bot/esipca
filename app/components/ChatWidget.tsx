@@ -147,6 +147,8 @@ export default function ChatWidget() {
       {/* Chat Button - positioned above GoogleTranslator */}
       <button
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={isOpen ? 'Inchide chat' : 'Deschide chat'}
+        aria-expanded={isOpen}
         style={{
           boxShadow: isOpen ? undefined : '0 4px 20px rgba(245, 158, 11, 0.4)',
         }}

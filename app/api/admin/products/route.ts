@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+
+async function checkAuth(): Promise<boolean> {
+  const cookieStore = await cookies()
+  const session = cookieStore.get('admin_session')
+  return !!session
+}
 
 // Extract profile number from product name (e.g., "Șipcă Metalică P12 - ..." => 12)
 function getProfileNumber(name: string): number {
@@ -9,6 +17,10 @@ function getProfileNumber(name: string): number {
 
 // Get all products
 export async function GET() {
+  if (!(await checkAuth())) {
+    return NextResponse.json({ error: 'Neautorizat' }, { status: 401 })
+  }
+
   try {
     const products = await prisma.product.findMany({
       include: {
@@ -33,10 +45,40 @@ export async function GET() {
   }
 }
 
+// Zod schema for product updates - prevents mass assignment
+const productUpdateSchema = z.object({
+  productId: z.string().min(1),
+  name: z.string().min(1).max(255).optional(),
+  slug: z.string().min(1).max(255).optional(),
+  shortDescription: z.string().max(1000).nullable().optional(),
+  longDescription: z.string().max(10000).nullable().optional(),
+  priceFrom: z.number().min(0).max(100000).optional(),
+  discountPercent: z.number().min(0).max(100).optional(),
+  priceType: z.enum(['per_piece', 'per_meter']).optional(),
+  variantPrice: z.number().min(0).max(100000).optional(),
+  specs: z.record(z.unknown()).nullable().optional(),
+  isFeatured: z.boolean().optional(),
+  isBestseller: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+})
+
 // Update product
 export async function PATCH(request: NextRequest) {
+  if (!(await checkAuth())) {
+    return NextResponse.json({ error: 'Neautorizat' }, { status: 401 })
+  }
+
   try {
     const body = await request.json()
+    const validated = productUpdateSchema.safeParse(body)
+
+    if (!validated.success) {
+      return NextResponse.json(
+        { error: 'Date invalide', details: validated.error.flatten() },
+        { status: 400 }
+      )
+    }
+
     const {
       productId,
       name,
@@ -51,14 +93,10 @@ export async function PATCH(request: NextRequest) {
       isFeatured,
       isBestseller,
       isActive,
-    } = body
+    } = validated.data
 
-    if (!productId) {
-      return NextResponse.json({ error: 'Missing productId' }, { status: 400 })
-    }
-
-    // Build update data
-    const updateData: any = {}
+    // Build update data - only allowed fields
+    const updateData: Record<string, unknown> = {}
     if (name !== undefined) updateData.name = name
     if (slug !== undefined) updateData.slug = slug
     if (shortDescription !== undefined) updateData.shortDescription = shortDescription

@@ -14,10 +14,10 @@ let migrationCompleted = false
  */
 export async function POST(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token')
-  const migrateSecret = process.env.MIGRATE_SECRET || 'change-me-in-production'
+  const migrateSecret = process.env.MIGRATE_SECRET
 
-  // Security check
-  if (token !== migrateSecret) {
+  // Security check - secret MUST be configured via env var
+  if (!migrateSecret || token !== migrateSecret) {
     return NextResponse.json(
       { error: 'Unauthorized - invalid token' },
       { status: 401 }
@@ -75,8 +75,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: errorMsg,
-        message: 'Migration failed',
+        error: 'Migration failed',
       },
       { status: 500 }
     )

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
 import prisma from '@/lib/prisma'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
 // Session duration: 24 hours
 const SESSION_DURATION = 24 * 60 * 60 * 1000
@@ -9,6 +10,16 @@ const SESSION_DURATION = 24 * 60 * 60 * 1000
 // POST - Login
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit login attempts: 5 per minute per IP
+    const ip = getClientIp(request)
+    const rl = rateLimit(`admin-login:${ip}`, { limit: 5, windowSeconds: 60 })
+    if (!rl.success) {
+      return NextResponse.json(
+        { success: false, error: 'Prea multe incercari. Asteptati un minut.' },
+        { status: 429 }
+      )
+    }
+
     const { email, password } = await request.json()
 
     if (!email || !password) {
@@ -40,8 +51,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create session token
-    const sessionToken = crypto.randomUUID()
+    // Create session token using cryptographic randomness
+    const tokenBytes = new Uint8Array(32)
+    crypto.getRandomValues(tokenBytes)
+    const sessionToken = Array.from(tokenBytes, (b) => b.toString(16).padStart(2, '0')).join('')
     const expires = new Date(Date.now() + SESSION_DURATION)
 
     // Set cookie
@@ -49,7 +62,7 @@ export async function POST(request: NextRequest) {
     cookieStore.set('admin_session', sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
       expires,
       path: '/',
     })
@@ -63,7 +76,7 @@ export async function POST(request: NextRequest) {
     }), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
       expires,
       path: '/',
     })
@@ -113,7 +126,15 @@ export async function GET() {
       return NextResponse.json({ authenticated: false })
     }
 
-    const user = JSON.parse(userCookie.value)
+    let user
+    try {
+      user = JSON.parse(userCookie.value)
+    } catch {
+      // Cookie tampered or corrupted - clear and reject
+      cookieStore.delete('admin_session')
+      cookieStore.delete('admin_user')
+      return NextResponse.json({ authenticated: false })
+    }
 
     return NextResponse.json({
       authenticated: true,

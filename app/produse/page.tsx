@@ -5,8 +5,8 @@ import { getAllProducts, getCategories as fetchCategories } from '@/lib/db'
 import SortDropdown from './SortDropdown'
 import ProductCard from './ProductCard'
 
-// Mark as dynamic - fetch products at runtime, not build time
-export const dynamic = 'force-dynamic'
+// ISR - revalidate every 60 seconds for fresh data with caching
+export const revalidate = 60
 
 export const metadata = {
   title: 'Produse | Esipca Metalica',

@@ -96,6 +96,8 @@ export default function Header() {
             {/* Mobile menu button */}
             <button
               onClick={toggleMenu}
+              aria-label="Meniu navigare"
+              aria-expanded={isMenuOpen}
               className="md:hidden p-2 hover:bg-dark-100 rounded-lg transition-colors"
             >
               {isMenuOpen ? (

@@ -10,7 +10,15 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: '*.metalfence.ro',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.esipcametalica.ro',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
       },
       {
         protocol: 'http',
@@ -50,7 +58,7 @@ const nextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://translate.google.com https://*.googleapis.com https://*.google.com https://*.gstatic.com; style-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://fonts.googleapis.com; img-src 'self' data: blob: https: http:; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://*.googleapis.com https://*.google.com https://api.mymemory.translated.net https://*.bnr.ro; frame-src 'self' https://translate.google.com;",
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://translate.google.com https://*.googleapis.com https://*.google.com https://*.gstatic.com; style-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://fonts.googleapis.com; img-src 'self' data: blob: https: http:; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://*.googleapis.com https://*.google.com https://api.mymemory.translated.net https://*.bnr.ro; frame-src 'self' https://translate.google.com;",
           },
         ],
       },

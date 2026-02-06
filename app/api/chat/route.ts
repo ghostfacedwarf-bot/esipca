@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { translateText, detectLanguage } from '@/lib/translate'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
 // WhatsApp notification number
 const WHATSAPP_NUMBER = '40722292519'
@@ -8,6 +9,16 @@ const WHATSAPP_NUMBER = '40722292519'
 // Create or get chat session
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit chat messages: 20 per minute per IP
+    const ip = getClientIp(request)
+    const rl = rateLimit(`chat:${ip}`, { limit: 20, windowSeconds: 60 })
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: 'Prea multe mesaje. Incercati din nou mai tarziu.' },
+        { status: 429 }
+      )
+    }
+
     const body = await request.json()
     const { sessionId, message, visitorName, visitorEmail } = body
 

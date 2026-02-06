@@ -738,6 +738,9 @@ export function buildNewsletterHtml(
               <p style="color: rgba(255,255,255,0.5); font-size: 11px; margin: 6px 0 0 0;">
                 Primesti acest email pentru ca te-ai abonat la newsletter-ul nostru.
               </p>
+              <p style="margin: 8px 0 0 0;">
+                <a href="${siteUrl}/api/newsletter/unsubscribe?email=%%EMAIL%%" style="color: rgba(255,255,255,0.7); font-size: 11px; text-decoration: underline;">Dezabonare</a>
+              </p>
             </td>
           </tr>
 
@@ -761,9 +764,12 @@ export async function sendNewsletter(
   let failed = 0
 
   for (const subscriber of subscribers) {
-    const html = buildNewsletterHtml(content, subscriber.name, mergedDesign)
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://metalfence.ro'
+    let html = buildNewsletterHtml(content, subscriber.name, mergedDesign)
+    // Replace email placeholder for unsubscribe link
+    html = html.replace(/%%EMAIL%%/g, encodeURIComponent(subscriber.email))
 
-    const text = `${subscriber.name ? `Buna, ${subscriber.name}!\n\n` : ''}${content}${mergedDesign.ctaText && mergedDesign.ctaUrl ? `\n\n${mergedDesign.ctaText}: ${mergedDesign.ctaUrl}` : ''}\n\n---\nEsipca Metalica\nTelefon: +40 (722) 292 519\nEmail: clienti@metalfence.ro\nhttps://metalfence.ro`
+    const text = `${subscriber.name ? `Buna, ${subscriber.name}!\n\n` : ''}${content}${mergedDesign.ctaText && mergedDesign.ctaUrl ? `\n\n${mergedDesign.ctaText}: ${mergedDesign.ctaUrl}` : ''}\n\n---\nEsipca Metalica\nTelefon: +40 (722) 292 519\nEmail: clienti@metalfence.ro\nhttps://metalfence.ro\n\nDezabonare: ${siteUrl}/api/newsletter/unsubscribe?email=${encodeURIComponent(subscriber.email)}`
 
     try {
       await transporter.sendMail({

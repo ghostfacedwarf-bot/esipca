@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { MessageCircle, Package, LogOut, Settings, LayoutDashboard, ShoppingCart, Users, BarChart3, Mail } from 'lucide-react'
+import { MessageCircle, Package, LogOut, Settings, LayoutDashboard, ShoppingCart, Users, BarChart3, Mail, Star } from 'lucide-react'
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -103,23 +103,45 @@ export default function AdminDashboard() {
             </div>
           </Link>
 
-          {/* Orders - Coming Soon */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 opacity-60 cursor-not-allowed">
+          {/* Orders */}
+          <Link
+            href="/admin/orders"
+            className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:border-green-500 hover:shadow-md transition-all group"
+          >
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                <ShoppingCart className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-500 transition-colors">
+                <ShoppingCart className="w-6 h-6 text-green-600 group-hover:text-white transition-colors" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-800">
+                <h3 className="text-lg font-semibold text-slate-800 group-hover:text-green-600 transition-colors">
                   Comenzi
-                  <span className="ml-2 text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">În curând</span>
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">
                   Gestionează comenzile clienților
                 </p>
               </div>
             </div>
-          </div>
+          </Link>
+
+          {/* Reviews */}
+          <Link
+            href="/admin/reviews"
+            className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:border-orange-500 hover:shadow-md transition-all group"
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center group-hover:bg-orange-500 transition-colors">
+                <Star className="w-6 h-6 text-orange-600 group-hover:text-white transition-colors" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-slate-800 group-hover:text-orange-600 transition-colors">
+                  Recenzii
+                </h3>
+                <p className="text-sm text-slate-500 mt-1">
+                  Gestioneaza recenziile clientilor
+                </p>
+              </div>
+            </div>
+          </Link>
 
           {/* Users - Coming Soon */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 opacity-60 cursor-not-allowed">
@@ -139,23 +161,25 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Analytics - Coming Soon */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 opacity-60 cursor-not-allowed">
+          {/* Analytics */}
+          <Link
+            href="/admin/stats"
+            className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:border-indigo-500 hover:shadow-md transition-all group"
+          >
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-indigo-600" />
+              <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center group-hover:bg-indigo-500 transition-colors">
+                <BarChart3 className="w-6 h-6 text-indigo-600 group-hover:text-white transition-colors" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-800">
+                <h3 className="text-lg font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">
                   Statistici
-                  <span className="ml-2 text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">În curând</span>
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">
                   Vizualizează rapoarte și analize
                 </p>
               </div>
             </div>
-          </div>
+          </Link>
 
           {/* Settings - Coming Soon */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 opacity-60 cursor-not-allowed">

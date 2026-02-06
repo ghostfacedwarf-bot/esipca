@@ -1,6 +1,14 @@
 import type { Metadata } from 'next'
+import { Montserrat } from 'next/font/google'
 import './globals.css'
 import Header from '@/components/Header'
+
+const montserrat = Montserrat({
+  subsets: ['latin', 'latin-ext'],
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  display: 'swap',
+  variable: '--font-montserrat',
+})
 import Footer from '@/components/Footer'
 import GoogleTranslator from '@/components/GoogleTranslator'
 import RegionAutoDetect from '@/components/RegionAutoDetect'
@@ -65,15 +73,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ro" suppressHydrationWarning>
+    <html lang="ro" className={montserrat.variable} suppressHydrationWarning>
       <head>
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="theme-color" content="#C0392B" />
-
-        {/* Preconnect to external domains */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
         {/* Canonical URL (updated dynamically by pages) */}
         <link rel="canonical" href="https://esipcametalica.ro" />

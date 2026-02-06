@@ -5,6 +5,7 @@
 
 import mysql from 'mysql2/promise'
 import { v4 as uuid } from 'uuid'
+import bcrypt from 'bcryptjs'
 
 let initStarted = false
 let initCompleted = false
@@ -195,6 +196,26 @@ export async function initializeDatabase() {
           console.error('[AUTO-INIT] SQL Error:', err.message)
         }
       }
+    }
+
+    // Ensure admin user exists (runs every time, independent of product seeding)
+    try {
+      const [userRows] = await connection.execute('SELECT COUNT(*) as count FROM `User`')
+      const userCount = (userRows as any[])[0]?.count || 0
+
+      if (userCount === 0) {
+        const adminEmail = process.env.ADMIN_EMAIL || 'admin'
+        const adminPassword = process.env.ADMIN_PASSWORD || 'admin'
+        const hashedPassword = await bcrypt.hash(adminPassword, 12)
+
+        await connection.execute(
+          'INSERT INTO `User` (id, email, password, name, role) VALUES (?, ?, ?, ?, ?)',
+          [uuid(), adminEmail, hashedPassword, 'Administrator', 'admin']
+        )
+        console.log(`[AUTO-INIT] ✅ Admin user created (email: ${adminEmail})`)
+      }
+    } catch (err) {
+      console.error('[AUTO-INIT] Error creating admin user:', err)
     }
 
     // Check if products already exist

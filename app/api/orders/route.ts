@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { rateLimit, getClientIp, RATE_LIMITS } from '@/lib/rate-limit'
 import { sendOrderEmails } from '@/lib/email'
+import prisma from '@/lib/prisma'
 
 // Input validation schema
 const customerSchema = z.object({
@@ -35,6 +36,13 @@ const orderSchema = z.object({
   language: z.string().min(2).max(5).optional().default('ro'),
 })
 
+function generateOrderNumber(): string {
+  const now = new Date()
+  const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '')
+  const random = Math.floor(1000 + Math.random() * 9000)
+  return `ORD-${dateStr}-${random}`
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting
@@ -67,23 +75,58 @@ export async function POST(request: NextRequest) {
 
     const { customer, items, totalPrice, language } = validatedData.data
 
-    // Create order (without logging PII)
-    const order = {
-      id: `ORD-${Date.now()}`,
-      itemCount: items.length,
-      totalPrice,
-      status: 'pending',
-      createdAt: new Date(),
+    // Generate order number
+    const orderNumber = generateOrderNumber()
+
+    // Save to database
+    let dbOrder: { id: string; orderNumber: string } | null = null
+    try {
+      dbOrder = await prisma.order.create({
+        data: {
+          orderNumber,
+          customerName: customer.name,
+          customerEmail: customer.email,
+          customerPhone: customer.phone,
+          customerAddress: customer.address,
+          customerCity: customer.city,
+          customerCounty: '', // Not in form but required field has default
+          customerPostal: customer.postalCode,
+          customerCountry: customer.country,
+          estimatedTotal: totalPrice,
+          status: 'pending',
+          items: {
+            create: items.map((item) => ({
+              productId: item.productId,
+              variantId: item.variantId || null,
+              quantity: item.quantity,
+              price: item.price,
+              productName: item.productName,
+              variantName: item.variantName || null,
+              sku: item.sku || null,
+              imageUrl: item.imageUrl || null,
+              attributes: item.attributes ? {
+                ...item.attributes,
+                ...(item.pricePerMeter ? { pricePerMeter: item.pricePerMeter } : {}),
+                ...(item.doubleSidedSurcharge ? { doubleSidedSurcharge: item.doubleSidedSurcharge } : {}),
+              } : null,
+            })),
+          },
+        },
+        select: { id: true, orderNumber: true },
+      })
+      console.log(`[ORDER] Saved to DB: ${dbOrder.orderNumber}`)
+    } catch (dbError) {
+      console.error('[ORDER] Failed to save to DB, continuing with email:', dbError)
     }
 
-    // Log only non-sensitive info
-    console.log(`[ORDER] New order ${order.id}: ${order.itemCount} items, ${order.totalPrice} RON`)
+    const orderId = dbOrder?.orderNumber || orderNumber
 
-    // TODO: Save to database
+    // Log only non-sensitive info
+    console.log(`[ORDER] New order ${orderId}: ${items.length} items, ${totalPrice} RON`)
 
     // Send confirmation emails
     const emailResults = await sendOrderEmails({
-      orderId: order.id,
+      orderId,
       customer: {
         name: customer.name,
         email: customer.email,
@@ -109,7 +152,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         message: 'Comandă plasată cu succes!',
-        orderId: order.id,
+        orderId,
         emailSent: emailResults.customer,
       },
       { status: 200 }

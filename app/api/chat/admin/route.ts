@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
+
+async function checkAuth(): Promise<boolean> {
+  const cookieStore = await cookies()
+  const session = cookieStore.get('admin_session')
+  return !!session
+}
 
 // Get all chats for admin
 export async function GET(request: NextRequest) {
+  if (!(await checkAuth())) {
+    return NextResponse.json({ error: 'Neautorizat' }, { status: 401 })
+  }
+
   try {
     const status = request.nextUrl.searchParams.get('status') || 'all'
 
@@ -31,6 +42,10 @@ export async function GET(request: NextRequest) {
 
 // Update chat status
 export async function PATCH(request: NextRequest) {
+  if (!(await checkAuth())) {
+    return NextResponse.json({ error: 'Neautorizat' }, { status: 401 })
+  }
+
   try {
     const body = await request.json()
     const { chatId, status } = body
@@ -53,6 +68,10 @@ export async function PATCH(request: NextRequest) {
 
 // Delete chat
 export async function DELETE(request: NextRequest) {
+  if (!(await checkAuth())) {
+    return NextResponse.json({ error: 'Neautorizat' }, { status: 401 })
+  }
+
   try {
     const body = await request.json()
     const { chatId } = body

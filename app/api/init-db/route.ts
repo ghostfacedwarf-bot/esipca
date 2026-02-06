@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import mysql from 'mysql2/promise'
+import bcrypt from 'bcryptjs'
 
 let initCompleted = false
 
@@ -154,10 +155,10 @@ CREATE TABLE IF NOT EXISTS \`Settings\` (
 
 export async function POST(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token')
-  const secretToken = process.env.INIT_DB_TOKEN || 'change-me-in-production'
+  const secretToken = process.env.INIT_DB_TOKEN
 
-  // Security check
-  if (token !== secretToken) {
+  // Security check - token MUST be configured via env var
+  if (!secretToken || token !== secretToken) {
     return NextResponse.json(
       { error: 'Unauthorized - invalid token' },
       { status: 401 }
@@ -275,6 +276,30 @@ export async function POST(request: NextRequest) {
       console.log('[INIT-DB] Settings already exist')
     }
 
+    // Ensure admin user exists
+    console.log('[INIT-DB] Checking admin user...')
+    try {
+      const [userRows] = await connection.execute('SELECT COUNT(*) as count FROM `User`')
+      const userCount = (userRows as any[])[0]?.count || 0
+
+      if (userCount === 0) {
+        const { cuid } = require('@paralleldrive/cuid2')
+        const adminEmail = process.env.ADMIN_EMAIL || 'admin'
+        const adminPassword = process.env.ADMIN_PASSWORD || 'admin'
+        const hashedPassword = await bcrypt.hash(adminPassword, 12)
+
+        await connection.execute(
+          'INSERT INTO `User` (id, email, password, name, role) VALUES (?, ?, ?, ?, ?)',
+          [cuid(), adminEmail, hashedPassword, 'Administrator', 'admin']
+        )
+        console.log(`[INIT-DB] ✅ Admin user created (email: ${adminEmail})`)
+      } else {
+        console.log('[INIT-DB] Admin user already exists')
+      }
+    } catch (err) {
+      console.error('[INIT-DB] Error creating admin user:', err)
+    }
+
     await connection.end()
 
     console.log('[INIT-DB] ✅ Database initialization completed')
@@ -292,7 +317,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: (error as Error).message,
+        error: 'Database initialization failed',
       },
       { status: 500 }
     )

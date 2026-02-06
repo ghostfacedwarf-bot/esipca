@@ -109,4 +109,6 @@ export const RATE_LIMITS = {
   api: { limit: 100, windowSeconds: 60 },
   // Admin endpoints: 10 requests per minute
   admin: { limit: 10, windowSeconds: 60 },
+  // Reviews: 3 submissions per 5 minutes
+  reviews: { limit: 3, windowSeconds: 300 },
 } as const

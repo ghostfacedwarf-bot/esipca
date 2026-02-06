@@ -46,7 +46,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['Montserrat', 'sans-serif'],
+        sans: ['var(--font-montserrat)', 'Montserrat', 'sans-serif'],
       },
       fontSize: {
         xs: ['12px', { lineHeight: '16px', letterSpacing: '0.01em' }],
