@@ -88,10 +88,11 @@ export async function POST(request: NextRequest) {
         name: user.name,
       },
     })
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('[Admin Auth] Error:', error)
+    const message = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { success: false, error: 'Eroare server' },
+      { success: false, error: 'Eroare server', details: message },
       { status: 500 }
     )
   }
