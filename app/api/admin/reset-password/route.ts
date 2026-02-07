@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import prisma from '@/lib/prisma'
+import mysql from 'mysql2/promise'
+import { createId } from '@paralleldrive/cuid2'
 
 export async function POST(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token')
@@ -19,29 +20,31 @@ export async function POST(request: NextRequest) {
     }
 
     const hashedPassword = await bcrypt.hash(adminPassword, 12)
+    const connection = await mysql.createConnection(process.env.DATABASE_URL!)
 
-    // Try to update existing user
-    const existing = await prisma.user.findFirst({ where: { email: adminEmail } })
+    // Check if user exists
+    const [rows] = await connection.execute(
+      'SELECT id FROM `User` WHERE email = ? LIMIT 1',
+      [adminEmail]
+    )
+    const users = rows as Array<{ id: string }>
 
-    if (existing) {
-      await prisma.user.update({
-        where: { id: existing.id },
-        data: { password: hashedPassword },
-      })
+    if (users.length > 0) {
+      await connection.execute(
+        'UPDATE `User` SET password = ? WHERE id = ?',
+        [hashedPassword, users[0].id]
+      )
+      await connection.end()
       return NextResponse.json({ success: true, message: `Password reset for ${adminEmail}` })
     }
 
     // Create user if not exists
-    const { createId } = await import('@paralleldrive/cuid2')
-    await prisma.user.create({
-      data: {
-        id: createId(),
-        email: adminEmail,
-        password: hashedPassword,
-        name: 'Administrator',
-        role: 'admin',
-      },
-    })
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
+    await connection.execute(
+      'INSERT INTO `User` (id, email, password, name, role, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [createId(), adminEmail, hashedPassword, 'Administrator', 'admin', now, now]
+    )
+    await connection.end()
 
     return NextResponse.json({ success: true, message: `User created: ${adminEmail}` })
   } catch (error: unknown) {

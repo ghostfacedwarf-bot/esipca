@@ -2,11 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
 import { randomBytes } from 'crypto'
-import prisma from '@/lib/prisma'
+import mysql from 'mysql2/promise'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
 // Session duration: 24 hours
 const SESSION_DURATION = 24 * 60 * 60 * 1000
+
+interface UserRow {
+  id: string
+  email: string
+  password: string
+  name: string | null
+  role: string
+}
+
+async function getDbConnection() {
+  return mysql.createConnection(process.env.DATABASE_URL!)
+}
 
 // POST - Login
 export async function POST(request: NextRequest) {
@@ -30,10 +42,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find user
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
-    })
+    // Find user via mysql2 (bypasses Prisma engine bug)
+    const connection = await getDbConnection()
+    const [rows] = await connection.execute(
+      'SELECT id, email, password, name, role FROM `User` WHERE email = ? LIMIT 1',
+      [email.toLowerCase()]
+    )
+    await connection.end()
+
+    const users = rows as UserRow[]
+    const user = users[0]
 
     if (!user) {
       return NextResponse.json(
