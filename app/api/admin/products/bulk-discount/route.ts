@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { prisma } from '@/lib/prisma'
+import mysql from 'mysql2/promise'
 
 async function checkAuth(): Promise<boolean> {
   const cookieStore = await cookies()
@@ -24,18 +24,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Update all products with the new discount
-    const result = await prisma.product.updateMany({
-      data: {
-        discountPercent: discountPercent,
-      },
-    })
+    const connection = await mysql.createConnection(process.env.DATABASE_URL!)
 
-    console.log(`[Admin] Applied ${discountPercent}% discount to ${result.count} products`)
+    const [result] = await connection.execute(
+      'UPDATE `Product` SET discountPercent = ?',
+      [discountPercent]
+    ) as any
+
+    await connection.end()
+
+    const updatedCount = result.affectedRows || 0
+    console.log(`[Admin] Applied ${discountPercent}% discount to ${updatedCount} products`)
 
     return NextResponse.json({
       success: true,
-      updatedCount: result.count,
+      updatedCount,
       discountPercent,
     })
   } catch (error) {

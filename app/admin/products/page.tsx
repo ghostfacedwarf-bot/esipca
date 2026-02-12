@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation'
 import {
   Package, Edit2, Save, X, LogOut, RefreshCw, ChevronLeft,
   Image as ImageIcon, Tag, FileText, Settings, Star, Eye, EyeOff,
-  Plus, Trash2
+  Plus, Trash2, Upload, Loader2
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
+import toast from 'react-hot-toast'
 
 interface Variant {
   id: string
@@ -74,14 +76,20 @@ export default function AdminProductsPage() {
   const [newSpecValue, setNewSpecValue] = useState('')
   const [bulkDiscount, setBulkDiscount] = useState('')
   const [isApplyingBulk, setIsApplyingBulk] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (refreshEditingId?: string) => {
     setIsLoading(true)
     try {
       const res = await fetch('/api/admin/products')
       const data = await res.json()
       if (data.products) {
         setProducts(data.products)
+        // Refresh the editing product with new data (e.g. after media upload)
+        if (refreshEditingId) {
+          const updated = data.products.find((p: Product) => p.id === refreshEditingId)
+          if (updated) setEditingProduct(updated)
+        }
       }
     } catch (error) {
       console.error('Failed to fetch products:', error)
@@ -314,11 +322,15 @@ export default function AdminProductsPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           {product.media && product.media[0] ? (
-                            <img
-                              src={product.media[0].url}
-                              alt={product.name}
-                              className="w-10 h-10 rounded-lg object-cover"
-                            />
+                            <div className="relative w-10 h-10">
+                              <Image
+                                src={product.media[0].url}
+                                alt={product.name}
+                                fill
+                                sizes="40px"
+                                className="rounded-lg object-cover"
+                              />
+                            </div>
                           ) : (
                             <div className="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center">
                               <Package className="w-5 h-5 text-slate-400" />
@@ -661,30 +673,112 @@ export default function AdminProductsPage() {
               {/* Media Tab */}
               {activeTab === 'media' && (
                 <div className="space-y-4">
-                  <div className="p-8 border-2 border-dashed border-slate-300 rounded-xl text-center">
-                    <ImageIcon className="w-12 h-12 mx-auto mb-3 text-slate-400" />
-                    <p className="text-slate-600 mb-2">Upload imagini pentru produs</p>
-                    <p className="text-sm text-slate-400 mb-4">Funcționalitate în dezvoltare</p>
-                    <button className="px-4 py-2 bg-slate-200 text-slate-500 rounded-lg cursor-not-allowed">
-                      Încarcă Imagini
-                    </button>
+                  {/* Upload zone */}
+                  <div className="relative">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={async (e) => {
+                        const files = e.target.files
+                        if (!files || !editingProduct) return
+                        setIsUploading(true)
+                        const formData = new FormData()
+                        formData.append('productId', editingProduct.id)
+                        for (const file of Array.from(files)) {
+                          formData.append('files', file)
+                        }
+                        try {
+                          const res = await fetch('/api/admin/products/upload', {
+                            method: 'POST',
+                            body: formData,
+                          })
+                          const data = await res.json()
+                          if (res.ok) {
+                            toast.success(`${data.uploaded} imagine(i) incarcate`)
+                            await fetchProducts(editingProduct.id)
+                          } else {
+                            toast.error(data.error || 'Eroare la upload')
+                          }
+                        } catch {
+                          toast.error('Eroare la upload')
+                        } finally {
+                          setIsUploading(false)
+                          e.target.value = ''
+                        }
+                      }}
+                      className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                      disabled={isUploading}
+                    />
+                    <div className={`p-8 border-2 border-dashed rounded-xl text-center transition-colors ${
+                      isUploading ? 'border-amber-400 bg-amber-50' : 'border-slate-300 hover:border-amber-400 hover:bg-amber-50'
+                    }`}>
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="w-12 h-12 mx-auto mb-3 text-amber-500 animate-spin" />
+                          <p className="text-amber-600 font-medium">Se incarca...</p>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-12 h-12 mx-auto mb-3 text-slate-400" />
+                          <p className="text-slate-600 mb-2">Click sau trage imaginile aici</p>
+                          <p className="text-sm text-slate-400">JPG, PNG, WebP - max 5MB per imagine</p>
+                        </>
+                      )}
+                    </div>
                   </div>
 
+                  {/* Existing images grid */}
                   {editingProduct.media && editingProduct.media.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-medium text-slate-700 mb-2">Imagini existente</h4>
+                      <h4 className="text-sm font-medium text-slate-700 mb-2">
+                        Imagini existente ({editingProduct.media.length})
+                      </h4>
                       <div className="grid grid-cols-4 gap-3">
-                        {editingProduct.media.map((media) => (
-                          <div key={media.id} className="relative aspect-square rounded-lg overflow-hidden border border-slate-200">
-                            <img
-                              src={media.url}
-                              alt={media.alt || ''}
-                              className="w-full h-full object-cover"
+                        {editingProduct.media.map((m) => (
+                          <div key={m.id} className="relative group aspect-square rounded-lg overflow-hidden border border-slate-200">
+                            <Image
+                              src={m.url}
+                              alt={m.alt || ''}
+                              fill
+                              sizes="200px"
+                              className="object-cover"
                             />
+                            <button
+                              onClick={async () => {
+                                if (!confirm('Sigur vrei sa stergi aceasta imagine?')) return
+                                try {
+                                  const res = await fetch('/api/admin/products/upload', {
+                                    method: 'DELETE',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ mediaId: m.id }),
+                                  })
+                                  if (res.ok) {
+                                    toast.success('Imagine stearsa')
+                                    await fetchProducts(editingProduct.id)
+                                  }
+                                } catch {
+                                  toast.error('Eroare la stergere')
+                                }
+                              }}
+                              className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                              title="Sterge imaginea"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs py-1 text-center">
+                              #{m.sortOrder}
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
+                  )}
+
+                  {(!editingProduct.media || editingProduct.media.length === 0) && (
+                    <p className="text-sm text-slate-400 text-center py-4">
+                      Nicio imagine. Incarca prima imagine mai sus.
+                    </p>
                   )}
                 </div>
               )}

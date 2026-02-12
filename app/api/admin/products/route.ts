@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
+import mysql from 'mysql2/promise'
 
 async function checkAuth(): Promise<boolean> {
   const cookieStore = await cookies()
   const session = cookieStore.get('admin_session')
   return !!session
+}
+
+async function getDbConnection() {
+  return mysql.createConnection(process.env.DATABASE_URL!)
 }
 
 // Extract profile number from product name (e.g., "Șipcă Metalică P12 - ..." => 12)
@@ -22,30 +26,104 @@ export async function GET() {
   }
 
   try {
-    const products = await prisma.product.findMany({
-      include: {
-        category: {
-          select: { id: true, name: true },
-        },
-        variants: true,
-        media: {
-          orderBy: { sortOrder: 'asc' },
-          take: 1,
-        },
-      },
+    const connection = await getDbConnection()
+
+    // Fetch products with category
+    const [productRows] = await connection.execute(`
+      SELECT p.*, c.id as catId, c.name as catName
+      FROM \`Product\` p
+      LEFT JOIN \`Category\` c ON p.categoryId = c.id
+      ORDER BY p.createdAt DESC
+    `)
+    const products = productRows as any[]
+
+    // Fetch all variants
+    const [variantRows] = await connection.execute(`
+      SELECT * FROM \`Variant\` ORDER BY productId, sku
+    `)
+    const variants = variantRows as any[]
+
+    // Fetch first media for each product (ordered by sortOrder)
+    const [mediaRows] = await connection.execute(`
+      SELECT m1.* FROM \`Media\` m1
+      INNER JOIN (
+        SELECT productId, MIN(sortOrder) as minSort
+        FROM \`Media\`
+        GROUP BY productId
+      ) m2 ON m1.productId = m2.productId AND m1.sortOrder = m2.minSort
+    `)
+    const mediaList = mediaRows as any[]
+
+    // Also fetch ALL media for each product (for the editor modal)
+    const [allMediaRows] = await connection.execute(`
+      SELECT * FROM \`Media\` ORDER BY productId, sortOrder ASC
+    `)
+    const allMedia = allMediaRows as any[]
+
+    await connection.end()
+
+    // Build media maps
+    const firstMediaMap: Record<string, any> = {}
+    for (const m of mediaList) {
+      firstMediaMap[m.productId] = m
+    }
+
+    const allMediaMap: Record<string, any[]> = {}
+    for (const m of allMedia) {
+      if (!allMediaMap[m.productId]) allMediaMap[m.productId] = []
+      allMediaMap[m.productId].push(m)
+    }
+
+    // Build variants map
+    const variantsMap: Record<string, any[]> = {}
+    for (const v of variants) {
+      if (!variantsMap[v.productId]) variantsMap[v.productId] = []
+      // Parse JSON attributes
+      let attributes = v.attributes
+      if (typeof attributes === 'string') {
+        try { attributes = JSON.parse(attributes) } catch { attributes = {} }
+      }
+      variantsMap[v.productId].push({ ...v, attributes })
+    }
+
+    // Assemble products
+    const result = products.map((p) => {
+      // Parse JSON specs
+      let specs = p.specs
+      if (typeof specs === 'string') {
+        try { specs = JSON.parse(specs) } catch { specs = {} }
+      }
+
+      return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        shortDescription: p.shortDescription,
+        longDescription: p.longDescription,
+        priceFrom: p.priceFrom,
+        discountPercent: p.discountPercent || 0,
+        priceType: p.priceType,
+        specs,
+        isFeatured: !!p.isFeatured,
+        isBestseller: !!p.isBestseller,
+        isActive: !!p.isActive,
+        category: { id: p.catId, name: p.catName },
+        variants: variantsMap[p.id] || [],
+        media: allMediaMap[p.id] || [],
+      }
     })
 
     // Sort by profile number (P1, P2, ... P27)
-    products.sort((a, b) => getProfileNumber(a.name) - getProfileNumber(b.name))
+    result.sort((a, b) => getProfileNumber(a.name) - getProfileNumber(b.name))
 
-    return NextResponse.json({ products })
+    return NextResponse.json({ products: result })
   } catch (error) {
     console.error('Products fetch error:', error)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
 
-// Zod schema for product updates - prevents mass assignment
+// Zod schema for product updates
 const productUpdateSchema = z.object({
   productId: z.string().min(1),
   name: z.string().min(1).max(255).optional(),
@@ -95,42 +173,51 @@ export async function PATCH(request: NextRequest) {
       isActive,
     } = validated.data
 
-    // Build update data - only allowed fields
-    const updateData: Record<string, unknown> = {}
-    if (name !== undefined) updateData.name = name
-    if (slug !== undefined) updateData.slug = slug
-    if (shortDescription !== undefined) updateData.shortDescription = shortDescription
-    if (longDescription !== undefined) updateData.longDescription = longDescription
-    if (priceFrom !== undefined) updateData.priceFrom = priceFrom
-    if (discountPercent !== undefined) updateData.discountPercent = discountPercent
-    if (priceType !== undefined) updateData.priceType = priceType
-    if (specs !== undefined) updateData.specs = specs
-    if (isFeatured !== undefined) updateData.isFeatured = isFeatured
-    if (isBestseller !== undefined) updateData.isBestseller = isBestseller
-    if (isActive !== undefined) updateData.isActive = isActive
+    const connection = await getDbConnection()
 
-    // Update priceFrom if variantPrice is provided (this is the main display price)
-    if (variantPrice !== undefined) {
-      updateData.priceFrom = variantPrice
-    }
+    // Build SET clause dynamically
+    const setClauses: string[] = []
+    const params: any[] = []
 
-    // Update product
-    const product = await prisma.product.update({
-      where: { id: productId },
-      data: updateData,
-    })
+    if (name !== undefined) { setClauses.push('name = ?'); params.push(name) }
+    if (slug !== undefined) { setClauses.push('slug = ?'); params.push(slug) }
+    if (shortDescription !== undefined) { setClauses.push('shortDescription = ?'); params.push(shortDescription) }
+    if (longDescription !== undefined) { setClauses.push('longDescription = ?'); params.push(longDescription) }
+    if (discountPercent !== undefined) { setClauses.push('discountPercent = ?'); params.push(discountPercent) }
+    if (priceType !== undefined) { setClauses.push('priceType = ?'); params.push(priceType) }
+    if (specs !== undefined) { setClauses.push('specs = ?'); params.push(JSON.stringify(specs)) }
+    if (isFeatured !== undefined) { setClauses.push('isFeatured = ?'); params.push(isFeatured) }
+    if (isBestseller !== undefined) { setClauses.push('isBestseller = ?'); params.push(isBestseller) }
+    if (isActive !== undefined) { setClauses.push('isActive = ?'); params.push(isActive) }
 
-    // If price changed, update all variant prices
+    // Update priceFrom
     const newPriceFrom = variantPrice ?? priceFrom
     if (newPriceFrom !== undefined) {
-      // Get all variants for this product
-      const variants = await prisma.variant.findMany({
-        where: { productId },
-      })
+      setClauses.push('priceFrom = ?')
+      params.push(newPriceFrom)
+    }
 
-      // Update each variant's price based on height and paint option
+    if (setClauses.length > 0) {
+      params.push(productId)
+      await connection.execute(
+        `UPDATE \`Product\` SET ${setClauses.join(', ')} WHERE id = ?`,
+        params
+      )
+    }
+
+    // If price changed, update all variant prices
+    if (newPriceFrom !== undefined) {
+      const [variantRows] = await connection.execute(
+        'SELECT id, attributes FROM `Variant` WHERE productId = ?',
+        [productId]
+      )
+      const variants = variantRows as any[]
+
       for (const variant of variants) {
-        const attributes = variant.attributes as Record<string, string> | null
+        let attributes = variant.attributes
+        if (typeof attributes === 'string') {
+          try { attributes = JSON.parse(attributes) } catch { attributes = {} }
+        }
         if (!attributes?.inaltime) continue
 
         // Extract height value (e.g., "1.0 m" -> 1.0)
@@ -140,34 +227,29 @@ export async function PATCH(request: NextRequest) {
         // Calculate base price for this height
         let variantBasePrice = newPriceFrom * height
 
-        // Add paint option surcharge if applicable
+        // Add paint option surcharge
         const paintOption = attributes.optiune_vopsea || ''
         if (paintOption.includes('mat față / mat spate') || paintOption.includes('mat fata / mat spate')) {
-          // MAT double-sided: +0.30 per height meter
           variantBasePrice += 0.30 * height
         } else if (paintOption.includes('ambele părți') || paintOption.includes('ambele parti')) {
-          // LUCIOS double-sided: +0.10 per height meter
           variantBasePrice += 0.10 * height
         }
 
-        // Round to 2 decimals
         const newPrice = Math.round(variantBasePrice * 100) / 100
         const newPriceEU = Math.round(newPrice * 2 * 100) / 100
 
-        // Update variant
-        await prisma.variant.update({
-          where: { id: variant.id },
-          data: {
-            price: newPrice,
-            priceEU: newPriceEU,
-          },
-        })
+        await connection.execute(
+          'UPDATE `Variant` SET price = ?, priceEU = ? WHERE id = ?',
+          [newPrice, newPriceEU, variant.id]
+        )
       }
 
       console.log(`[Admin] Updated ${variants.length} variant prices for product ${productId}`)
     }
 
-    return NextResponse.json({ success: true, product })
+    await connection.end()
+
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Product update error:', error)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })

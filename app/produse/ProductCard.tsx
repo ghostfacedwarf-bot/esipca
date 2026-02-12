@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowRight, GitCompare, Check } from 'lucide-react'
 import { useRegionStore, useComparator, CompareProduct } from '@/lib/store'
 import { useExchangeRate, ronToEur, formatEur } from '@/lib/useExchangeRate'
@@ -69,10 +70,12 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Product image */}
         <div className="aspect-square bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center overflow-hidden group relative">
           {product.media && product.media.length > 0 && product.media[0]?.url ? (
-            <img
+            <Image
               src={product.media[0].url}
               alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="object-cover group-hover:scale-110 transition-transform"
             />
           ) : (
             <>
