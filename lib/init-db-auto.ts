@@ -198,16 +198,26 @@ export async function initializeDatabase() {
       }
     }
 
-    // Ensure admin user exists (runs every time, independent of product seeding)
+    // Ensure admin user exists and password is synced with env vars
     try {
-      const [userRows] = await connection.execute('SELECT COUNT(*) as count FROM `User`')
-      const userCount = (userRows as any[])[0]?.count || 0
+      const adminEmail = process.env.ADMIN_EMAIL || 'admin'
+      const adminPassword = process.env.ADMIN_PASSWORD || 'admin'
+      const hashedPassword = await bcrypt.hash(adminPassword, 12)
 
-      if (userCount === 0) {
-        const adminEmail = process.env.ADMIN_EMAIL || 'admin'
-        const adminPassword = process.env.ADMIN_PASSWORD || 'admin'
-        const hashedPassword = await bcrypt.hash(adminPassword, 12)
+      const [userRows] = await connection.execute(
+        'SELECT id FROM `User` WHERE email = ? LIMIT 1',
+        [adminEmail]
+      )
+      const users = userRows as Array<{ id: string }>
 
+      if (users.length > 0) {
+        // Update password to match current env var
+        await connection.execute(
+          'UPDATE `User` SET password = ? WHERE id = ?',
+          [hashedPassword, users[0].id]
+        )
+        console.log(`[AUTO-INIT] ✅ Admin password synced (email: ${adminEmail})`)
+      } else {
         const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
         await connection.execute(
           'INSERT INTO `User` (id, email, password, name, role, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -216,7 +226,7 @@ export async function initializeDatabase() {
         console.log(`[AUTO-INIT] ✅ Admin user created (email: ${adminEmail})`)
       }
     } catch (err) {
-      console.error('[AUTO-INIT] Error creating admin user:', err)
+      console.error('[AUTO-INIT] Error syncing admin user:', err)
     }
 
     // Check if products already exist

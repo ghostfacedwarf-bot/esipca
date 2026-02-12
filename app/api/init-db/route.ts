@@ -276,29 +276,36 @@ export async function POST(request: NextRequest) {
       console.log('[INIT-DB] Settings already exist')
     }
 
-    // Ensure admin user exists
-    console.log('[INIT-DB] Checking admin user...')
+    // Ensure admin user exists and password is synced
+    console.log('[INIT-DB] Syncing admin user...')
     try {
-      const [userRows] = await connection.execute('SELECT COUNT(*) as count FROM `User`')
-      const userCount = (userRows as any[])[0]?.count || 0
+      const { cuid } = require('@paralleldrive/cuid2')
+      const adminEmail = process.env.ADMIN_EMAIL || 'admin'
+      const adminPassword = process.env.ADMIN_PASSWORD || 'admin'
+      const hashedPassword = await bcrypt.hash(adminPassword, 12)
 
-      if (userCount === 0) {
-        const { cuid } = require('@paralleldrive/cuid2')
-        const adminEmail = process.env.ADMIN_EMAIL || 'admin'
-        const adminPassword = process.env.ADMIN_PASSWORD || 'admin'
-        const hashedPassword = await bcrypt.hash(adminPassword, 12)
+      const [userRows] = await connection.execute(
+        'SELECT id FROM `User` WHERE email = ? LIMIT 1',
+        [adminEmail]
+      )
+      const users = userRows as Array<{ id: string }>
 
+      if (users.length > 0) {
+        await connection.execute(
+          'UPDATE `User` SET password = ? WHERE id = ?',
+          [hashedPassword, users[0].id]
+        )
+        console.log(`[INIT-DB] ✅ Admin password synced (email: ${adminEmail})`)
+      } else {
         const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
         await connection.execute(
           'INSERT INTO `User` (id, email, password, name, role, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)',
           [cuid(), adminEmail, hashedPassword, 'Administrator', 'admin', now, now]
         )
         console.log(`[INIT-DB] ✅ Admin user created (email: ${adminEmail})`)
-      } else {
-        console.log('[INIT-DB] Admin user already exists')
       }
     } catch (err) {
-      console.error('[INIT-DB] Error creating admin user:', err)
+      console.error('[INIT-DB] Error syncing admin user:', err)
     }
 
     await connection.end()
