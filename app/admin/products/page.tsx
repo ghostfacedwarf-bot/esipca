@@ -279,7 +279,7 @@ export default function AdminProductsPage() {
                 </button>
               </div>
               <button
-                onClick={fetchProducts}
+                onClick={() => fetchProducts()}
                 className="p-2 text-slate-600 hover:text-amber-500 transition-colors"
                 title="Refresh"
               >
