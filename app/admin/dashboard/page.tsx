@@ -143,23 +143,25 @@ export default function AdminDashboard() {
             </div>
           </Link>
 
-          {/* Users - Coming Soon */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 opacity-60 cursor-not-allowed">
+          {/* Users */}
+          <Link
+            href="/admin/users"
+            className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:border-purple-500 hover:shadow-md transition-all group"
+          >
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-500 transition-colors">
+                <Users className="w-6 h-6 text-purple-600 group-hover:text-white transition-colors" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-800">
+                <h3 className="text-lg font-semibold text-slate-800 group-hover:text-purple-600 transition-colors">
                   Utilizatori
-                  <span className="ml-2 text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">În curând</span>
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">
                   Gestionează conturile admin
                 </p>
               </div>
             </div>
-          </div>
+          </Link>
 
           {/* Analytics */}
           <Link
@@ -181,23 +183,25 @@ export default function AdminDashboard() {
             </div>
           </Link>
 
-          {/* Settings - Coming Soon */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 opacity-60 cursor-not-allowed">
+          {/* Settings */}
+          <Link
+            href="/admin/settings"
+            className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:border-slate-500 hover:shadow-md transition-all group"
+          >
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center">
-                <Settings className="w-6 h-6 text-slate-600" />
+              <div className="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center group-hover:bg-slate-600 transition-colors">
+                <Settings className="w-6 h-6 text-slate-600 group-hover:text-white transition-colors" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-800">
+                <h3 className="text-lg font-semibold text-slate-800 group-hover:text-slate-600 transition-colors">
                   Setări
-                  <span className="ml-2 text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">În curând</span>
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">
                   Configurează opțiuni generale
                 </p>
               </div>
             </div>
-          </div>
+          </Link>
         </div>
       </div>
     </div>

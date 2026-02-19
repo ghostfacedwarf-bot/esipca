@@ -789,6 +789,146 @@ export async function sendNewsletter(
   return { sent, failed, total: subscribers.length }
 }
 
+// Courier tracking URLs
+const COURIER_TRACKING_URLS: Record<string, string> = {
+  FanCourier: 'https://www.fancourier.ro/awb-tracking/?awb=',
+  Sameday: 'https://www.sameday.ro/tracking/awb/',
+  Cargus: 'https://www.cargus.ro/tracking/?t=',
+  GLS: 'https://gls-group.eu/track/',
+  DPD: 'https://tracking.dpd.de/status/en_US/parcel/',
+  PostaRomana: 'https://www.pfroman.ro/tracking/',
+}
+
+export function getCourierTrackingUrl(courierName: string, trackingNumber: string): string | null {
+  const baseUrl = COURIER_TRACKING_URLS[courierName]
+  if (!baseUrl) return null
+  return `${baseUrl}${encodeURIComponent(trackingNumber)}`
+}
+
+const STATUS_TRANSLATIONS_RO: Record<string, string> = {
+  pending: 'In asteptare',
+  confirmed: 'Confirmata',
+  shipped: 'Expediata',
+  completed: 'Finalizata',
+  cancelled: 'Anulata',
+}
+
+interface OrderStatusUpdateData {
+  orderNumber: string
+  customerEmail: string
+  customerName: string
+  newStatus: string
+  trackingNumber?: string
+  courierName?: string
+}
+
+export async function sendOrderStatusUpdateEmail(data: OrderStatusUpdateData): Promise<boolean> {
+  const { orderNumber, customerEmail, customerName, newStatus, trackingNumber, courierName } = data
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://metalfence.ro'
+  const logoUrl = getLogoUrl('ro')
+  const statusLabel = STATUS_TRANSLATIONS_RO[newStatus] || newStatus
+  const trackUrl = `${siteUrl}/track`
+
+  let trackingLink = ''
+  let trackingLinkHtml = ''
+  if (trackingNumber && courierName) {
+    const courierUrl = getCourierTrackingUrl(courierName, trackingNumber)
+    if (courierUrl) {
+      trackingLink = `\nUrmarire colet (${courierName}): ${courierUrl}`
+      trackingLinkHtml = `
+        <div style="background: #dbeafe; border: 1px solid #93c5fd; border-radius: 8px; padding: 15px; margin: 15px 0; text-align: center;">
+          <p style="margin: 0 0 8px 0; color: #1e40af; font-size: 14px;">
+            <strong>AWB:</strong> ${trackingNumber} (${courierName})
+          </p>
+          <a href="${courierUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 10px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
+            Urmareste coletul
+          </a>
+        </div>`
+    }
+  }
+
+  const statusColors: Record<string, { bg: string; border: string; text: string }> = {
+    pending: { bg: '#fef3c7', border: '#fcd34d', text: '#92400e' },
+    confirmed: { bg: '#dbeafe', border: '#93c5fd', text: '#1e40af' },
+    shipped: { bg: '#e9d5ff', border: '#c084fc', text: '#7c3aed' },
+    completed: { bg: '#dcfce7', border: '#86efac', text: '#166534' },
+    cancelled: { bg: '#fee2e2', border: '#fca5a5', text: '#991b1b' },
+  }
+  const colors = statusColors[newStatus] || statusColors.pending
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+    <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f3f4f6;">
+      <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+          <img src="${logoUrl}" alt="Esipca Metalica" style="max-height: 60px; width: auto; margin-bottom: 10px;" />
+          <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Actualizare comanda</p>
+        </div>
+
+        <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+          <p style="font-size: 16px; color: #374151;">Buna <strong>${customerName}</strong>,</p>
+          <p style="color: #374151;">Comanda ta <strong>${orderNumber}</strong> a fost actualizata.</p>
+
+          <div style="background: ${colors.bg}; border: 1px solid ${colors.border}; border-radius: 8px; padding: 15px; margin: 20px 0; text-align: center;">
+            <p style="margin: 0; color: ${colors.text}; font-weight: 600; font-size: 18px;">
+              Status: ${statusLabel}
+            </p>
+          </div>
+
+          ${trackingLinkHtml}
+
+          <div style="text-align: center; margin: 20px 0;">
+            <a href="${trackUrl}" style="display: inline-block; background: #1e40af; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
+              Verifica statusul comenzii
+            </a>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 25px 0;">
+          <p style="color: #6b7280; font-size: 14px; text-align: center;">
+            Pentru intrebari: +40 (722) 292 519 | clienti@metalfence.ro
+          </p>
+        </div>
+
+        <p style="text-align: center; color: #9ca3af; font-size: 12px; margin-top: 20px;">
+          &copy; ${new Date().getFullYear()} Esipca Metalica. Toate drepturile rezervate.
+        </p>
+      </div>
+    </body>
+    </html>
+  `
+
+  const text = `Esipca Metalica - Actualizare Comanda
+
+Buna ${customerName},
+
+Comanda ta ${orderNumber} a fost actualizata.
+Status nou: ${statusLabel}
+${trackingLink}
+
+Verifica statusul comenzii: ${trackUrl}
+
+Pentru intrebari: +40 (722) 292 519 | clienti@metalfence.ro
+
+© ${new Date().getFullYear()} Esipca Metalica`
+
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || 'Esipca Metalica <clienti@metalfence.ro>',
+      to: customerEmail,
+      subject: `Comanda ${orderNumber} - ${statusLabel}`,
+      text,
+      html,
+    })
+    console.log(`[EMAIL] Status update sent to ${customerEmail} for ${orderNumber}: ${newStatus}`)
+    return true
+  } catch (error) {
+    console.error('[EMAIL] Failed to send status update:', error)
+    return false
+  }
+}
+
 interface ContactFormData {
   name: string
   email: string

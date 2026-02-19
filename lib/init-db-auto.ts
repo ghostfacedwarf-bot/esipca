@@ -157,6 +157,27 @@ CREATE TABLE IF NOT EXISTS \`Settings\` (
   \`deliveryDays\` VARCHAR(50) DEFAULT '1-7',
   \`updatedAt\` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+-- Order tracking columns
+ALTER TABLE \`Order\` ADD COLUMN \`trackingNumber\` VARCHAR(255) DEFAULT NULL;
+ALTER TABLE \`Order\` ADD COLUMN \`courierName\` VARCHAR(100) DEFAULT NULL;
+ALTER TABLE \`Order\` ADD COLUMN \`statusHistory\` JSON DEFAULT NULL;
+
+-- Settings expansion columns
+ALTER TABLE \`Settings\` ADD COLUMN \`companyCUI\` VARCHAR(50) DEFAULT '';
+ALTER TABLE \`Settings\` ADD COLUMN \`companyJ\` VARCHAR(50) DEFAULT '';
+ALTER TABLE \`Settings\` ADD COLUMN \`smtpHost\` VARCHAR(255) DEFAULT '';
+ALTER TABLE \`Settings\` ADD COLUMN \`smtpPort\` INT DEFAULT 465;
+ALTER TABLE \`Settings\` ADD COLUMN \`smtpUser\` VARCHAR(255) DEFAULT '';
+ALTER TABLE \`Settings\` ADD COLUMN \`smtpPass\` VARCHAR(255) DEFAULT '';
+ALTER TABLE \`Settings\` ADD COLUMN \`emailFrom\` VARCHAR(255) DEFAULT '';
+ALTER TABLE \`Settings\` ADD COLUMN \`emailFromName\` VARCHAR(255) DEFAULT '';
+ALTER TABLE \`Settings\` ADD COLUMN \`siteTitle\` VARCHAR(255) DEFAULT 'Esipca Metalica';
+ALTER TABLE \`Settings\` ADD COLUMN \`siteDescription\` TEXT;
+ALTER TABLE \`Settings\` ADD COLUMN \`metaKeywords\` TEXT;
+ALTER TABLE \`Settings\` ADD COLUMN \`minOrderAmount\` FLOAT DEFAULT 0;
+ALTER TABLE \`Settings\` ADD COLUMN \`shippingFee\` FLOAT DEFAULT 0;
+ALTER TABLE \`Settings\` ADD COLUMN \`orderConfirmationMessage\` TEXT;
 `
 
 export async function initializeDatabase() {
@@ -192,7 +213,7 @@ export async function initializeDatabase() {
       try {
         await connection.execute(statement)
       } catch (err: any) {
-        if (!err.message.includes('already exists')) {
+        if (!err.message.includes('already exists') && !err.message.includes('Duplicate column')) {
           console.error('[AUTO-INIT] SQL Error:', err.message)
         }
       }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
 import mysql from 'mysql2/promise'
+import { sendOrderStatusUpdateEmail } from '@/lib/email'
 
 async function getConnection() {
   return mysql.createConnection(process.env.DATABASE_URL || '')
@@ -29,6 +30,9 @@ interface OrderRow {
   status: string
   paymentMethod: string
   notes: string | null
+  trackingNumber: string | null
+  courierName: string | null
+  statusHistory: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -127,7 +131,8 @@ export async function GET(request: NextRequest) {
       `SELECT o.id, o.orderNumber, o.customerName, o.customerEmail, o.customerPhone,
               o.customerAddress, o.customerCity, o.customerCounty, o.customerPostal,
               o.customerCountry, o.message, o.estimatedTotal, o.status, o.paymentMethod,
-              o.notes, o.createdAt, o.updatedAt
+              o.notes, o.trackingNumber, o.courierName, o.statusHistory,
+              o.createdAt, o.updatedAt
        FROM \`Order\` o
        ${whereClause}
        ORDER BY o.createdAt DESC
@@ -203,11 +208,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// PATCH - Update order status/notes
+// PATCH - Update order status/notes/tracking
 const updateSchema = z.object({
   orderId: z.string(),
   status: z.enum(['pending', 'confirmed', 'shipped', 'completed', 'cancelled']).optional(),
   notes: z.string().optional(),
+  trackingNumber: z.string().optional(),
+  courierName: z.string().optional(),
 })
 
 export async function PATCH(request: NextRequest) {
@@ -228,9 +235,20 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const { orderId, status, notes } = validated.data
+    const { orderId, status, notes, trackingNumber, courierName } = validated.data
 
     connection = await getConnection()
+
+    // Fetch current order to get existing statusHistory
+    const [currentRows] = await connection.execute(
+      'SELECT status, statusHistory, customerEmail, customerName, orderNumber, trackingNumber, courierName FROM `Order` WHERE id = ?',
+      [orderId]
+    )
+    const currentOrder = (currentRows as any[])[0]
+    if (!currentOrder) {
+      await connection.end()
+      return NextResponse.json({ message: 'Comanda nu a fost gasita' }, { status: 404 })
+    }
 
     // Build SET clause dynamically
     const setClauses: string[] = []
@@ -243,6 +261,32 @@ export async function PATCH(request: NextRequest) {
     if (notes !== undefined) {
       setClauses.push('notes = ?')
       updateParams.push(notes)
+    }
+    if (trackingNumber !== undefined) {
+      setClauses.push('trackingNumber = ?')
+      updateParams.push(trackingNumber)
+    }
+    if (courierName !== undefined) {
+      setClauses.push('courierName = ?')
+      updateParams.push(courierName)
+    }
+
+    // Append to statusHistory when status changes
+    if (status !== undefined && status !== currentOrder.status) {
+      let history: Array<{ status: string; date: string; note?: string }> = []
+      try {
+        const raw = currentOrder.statusHistory
+        if (raw) {
+          history = typeof raw === 'string' ? JSON.parse(raw) : raw
+        }
+      } catch {}
+      history.push({
+        status,
+        date: new Date().toISOString(),
+        note: notes,
+      })
+      setClauses.push('statusHistory = ?')
+      updateParams.push(JSON.stringify(history))
     }
 
     if (setClauses.length === 0) {
@@ -261,12 +305,25 @@ export async function PATCH(request: NextRequest) {
       [...updateParams, orderId]
     )
 
+    // Send email notification on status change (async, non-blocking)
+    if (status !== undefined && status !== currentOrder.status) {
+      sendOrderStatusUpdateEmail({
+        orderNumber: currentOrder.orderNumber,
+        customerEmail: currentOrder.customerEmail,
+        customerName: currentOrder.customerName,
+        newStatus: status,
+        trackingNumber: trackingNumber ?? currentOrder.trackingNumber ?? undefined,
+        courierName: courierName ?? currentOrder.courierName ?? undefined,
+      }).catch((err) => console.error('[ADMIN ORDERS] Failed to send status email:', err))
+    }
+
     // Fetch the updated order
     const [orderRows] = await connection.execute(
       `SELECT id, orderNumber, customerName, customerEmail, customerPhone,
               customerAddress, customerCity, customerCounty, customerPostal,
               customerCountry, message, estimatedTotal, status, paymentMethod,
-              notes, createdAt, updatedAt
+              notes, trackingNumber, courierName, statusHistory,
+              createdAt, updatedAt
        FROM \`Order\`
        WHERE id = ?`,
       [orderId]

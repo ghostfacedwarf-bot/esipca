@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   ShoppingCart, ChevronLeft, LogOut, RefreshCw, Loader2, Search,
   X, Package, Clock, CheckCircle, Truck, XCircle, Mail, Phone,
-  MapPin, Save, FileText,
+  MapPin, Save, FileText, ExternalLink,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -21,6 +21,12 @@ interface OrderItem {
   imageUrl: string | null
   attributes: Record<string, unknown> | null
   createdAt: string
+}
+
+interface StatusHistoryEntry {
+  status: string
+  date: string
+  note?: string
 }
 
 interface Order {
@@ -40,6 +46,9 @@ interface Order {
   status: string
   paymentMethod: string
   notes: string | null
+  trackingNumber: string | null
+  courierName: string | null
+  statusHistory: StatusHistoryEntry[] | null
   createdAt: string
   updatedAt: string
 }
@@ -60,6 +69,25 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; i
   shipped: { label: 'Livrata', bg: 'bg-purple-100', text: 'text-purple-700', icon: Truck },
   completed: { label: 'Completata', bg: 'bg-green-100', text: 'text-green-700', icon: CheckCircle },
   cancelled: { label: 'Anulata', bg: 'bg-red-100', text: 'text-red-700', icon: XCircle },
+}
+
+const COURIER_OPTIONS = [
+  { value: '', label: 'Selecteaza curier...' },
+  { value: 'FanCourier', label: 'FanCourier' },
+  { value: 'Sameday', label: 'Sameday' },
+  { value: 'Cargus', label: 'Cargus' },
+  { value: 'GLS', label: 'GLS' },
+  { value: 'DPD', label: 'DPD' },
+  { value: 'PostaRomana', label: 'Posta Romana' },
+]
+
+const COURIER_TRACKING_URLS: Record<string, string> = {
+  FanCourier: 'https://www.fancourier.ro/awb-tracking/?awb=',
+  Sameday: 'https://www.sameday.ro/tracking/awb/',
+  Cargus: 'https://www.cargus.ro/tracking/?t=',
+  GLS: 'https://gls-group.eu/track/',
+  DPD: 'https://tracking.dpd.de/status/en_US/parcel/',
+  PostaRomana: 'https://www.pfroman.ro/tracking/',
 }
 
 const STATUS_TABS = [
@@ -83,6 +111,8 @@ export default function AdminOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [editStatus, setEditStatus] = useState('')
   const [editNotes, setEditNotes] = useState('')
+  const [editTrackingNumber, setEditTrackingNumber] = useState('')
+  const [editCourierName, setEditCourierName] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 
   const handleLogout = async () => {
@@ -124,12 +154,16 @@ export default function AdminOrdersPage() {
     setSelectedOrder(order)
     setEditStatus(order.status)
     setEditNotes(order.notes || '')
+    setEditTrackingNumber(order.trackingNumber || '')
+    setEditCourierName(order.courierName || '')
   }
 
   const closeModal = useCallback(() => {
     setSelectedOrder(null)
     setEditStatus('')
     setEditNotes('')
+    setEditTrackingNumber('')
+    setEditCourierName('')
   }, [])
 
   // Close modal on Escape key
@@ -154,6 +188,8 @@ export default function AdminOrdersPage() {
           orderId: selectedOrder.id,
           status: editStatus,
           notes: editNotes,
+          trackingNumber: editTrackingNumber,
+          courierName: editCourierName,
         }),
       })
 
@@ -540,6 +576,81 @@ export default function AdminOrdersPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Tracking Info */}
+              <div>
+                <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                  <Truck className="w-4 h-4" />
+                  Tracking / Expediere
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="courierName" className="block text-xs font-medium text-slate-600 mb-1">
+                      Curier
+                    </label>
+                    <select
+                      id="courierName"
+                      value={editCourierName}
+                      onChange={(e) => setEditCourierName(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    >
+                      {COURIER_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="trackingNumber" className="block text-xs font-medium text-slate-600 mb-1">
+                      Numar AWB / Tracking
+                    </label>
+                    <input
+                      id="trackingNumber"
+                      type="text"
+                      value={editTrackingNumber}
+                      onChange={(e) => setEditTrackingNumber(e.target.value)}
+                      placeholder="Numar AWB..."
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                </div>
+                {editTrackingNumber && editCourierName && COURIER_TRACKING_URLS[editCourierName] && (
+                  <a
+                    href={`${COURIER_TRACKING_URLS[editCourierName]}${encodeURIComponent(editTrackingNumber)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Urmarire colet ({editCourierName})
+                  </a>
+                )}
+              </div>
+
+              {/* Status History Timeline */}
+              {selectedOrder.statusHistory && selectedOrder.statusHistory.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-700 mb-3">Istoric status</h3>
+                  <div className="space-y-2">
+                    {(Array.isArray(selectedOrder.statusHistory) ? selectedOrder.statusHistory : []).map((entry, idx) => {
+                      const config = STATUS_CONFIG[entry.status] || STATUS_CONFIG.pending
+                      return (
+                        <div key={idx} className="flex items-start gap-3">
+                          <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${config.bg.replace('bg-', 'bg-')}`}
+                            style={{ backgroundColor: entry.status === 'pending' ? '#f59e0b' : entry.status === 'confirmed' ? '#3b82f6' : entry.status === 'shipped' ? '#a855f7' : entry.status === 'completed' ? '#22c55e' : '#ef4444' }}
+                          />
+                          <div className="flex-1">
+                            <span className={`text-xs font-medium ${config.text}`}>{config.label}</span>
+                            <span className="text-xs text-slate-400 ml-2">
+                              {new Date(entry.date).toLocaleString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            {entry.note && <p className="text-xs text-slate-500 mt-0.5">{entry.note}</p>}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label htmlFor="orderNotes" className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 mb-1">
