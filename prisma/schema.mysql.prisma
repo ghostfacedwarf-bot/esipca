@@ -43,8 +43,8 @@ model Product {
   id                   String     @id @default(cuid())
   name                 String
   slug                 String     @unique
-  shortDescription    String?
-  longDescription     String?
+  shortDescription    String?    @db.Text
+  longDescription     String?    @db.Text
   categoryId          String
   category            Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
