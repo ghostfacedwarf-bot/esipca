@@ -6,6 +6,9 @@ import FeaturedProductCard from './components/FeaturedProductCard'
 import NewsletterForm from './components/NewsletterForm'
 import { getFeaturedProducts } from '@/lib/db'
 
+// Revalidate every 60 seconds so new products show without rebuild
+export const revalidate = 60
+
 // Static metadata
 export const metadata = {
   title: 'Esipca Metalica | Șipcă, Tablă și Jgheaburi de Calitate',
@@ -53,7 +56,7 @@ export default async function Home() {
   // Fetch featured products from database
   let recommendedProducts = fallbackProducts
   try {
-    const dbProducts = await getFeaturedProducts(3)
+    const dbProducts = await getFeaturedProducts(50)
     if (dbProducts && dbProducts.length > 0) {
       recommendedProducts = dbProducts
     }
@@ -105,12 +108,12 @@ export default async function Home() {
       {/* Featured Products Section */}
       <section className="py-20 bg-dark-50">
         <div className="container-max">
-          <h2 className="text-4xl font-bold text-center mb-4">Produse Recomandate</h2>
+          <h2 className="text-4xl font-bold text-center mb-4">Produsele Noastre</h2>
           <p className="text-center text-dark-600 mb-12 max-w-2xl mx-auto">
-            Produse aleatoare din catalogul nostru
+            Șipcă metalică de calitate superioară, disponibilă în diverse profile și culori
           </p>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {recommendedProducts.map((product) => (
               <FeaturedProductCard key={product.id} product={product} />
             ))}

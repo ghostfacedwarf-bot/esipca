@@ -207,7 +207,7 @@ export async function getAllProducts() {
   }
 }
 
-export async function getFeaturedProducts(limit: number = 3) {
+export async function getFeaturedProducts(limit: number = 50) {
   const dbType = getDatabaseType()
 
   try {
@@ -219,8 +219,8 @@ export async function getFeaturedProducts(limit: number = 3) {
          (SELECT json_agg(sub) FROM (SELECT * FROM "Media" m WHERE m."productId" = p.id ORDER BY m."sortOrder") sub) as media
          FROM "Product" p
          LEFT JOIN "Category" c ON p."categoryId" = c.id
-         WHERE p."isActive" = true
-         ORDER BY RANDOM()
+         WHERE p."isActive" = true AND p."isFeatured" = true
+         ORDER BY p.name ASC
          LIMIT $1`,
         [limit]
       )
@@ -239,8 +239,8 @@ export async function getFeaturedProducts(limit: number = 3) {
         `SELECT p.*, c.name as categoryName
          FROM Product p
          LEFT JOIN Category c ON p.categoryId = c.id
-         WHERE p.isActive = true
-         ORDER BY RAND()
+         WHERE p.isActive = true AND p.isFeatured = true
+         ORDER BY p.name ASC
          LIMIT ${Number(limit)}`
       )
 
