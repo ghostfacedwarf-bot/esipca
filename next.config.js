@@ -1,11 +1,3 @@
-const { withSentryConfig } = require('@sentry/nextjs')
-
-const withSerwist = require('@serwist/next').default({
-  swSrc: 'app/sw.ts',
-  swDest: 'public/sw.js',
-  disable: process.env.NODE_ENV === 'development',
-})
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -89,8 +81,29 @@ const nextConfig = {
   },
 }
 
-module.exports = withSentryConfig(withSerwist(nextConfig), {
-  silent: true,
-  hideSourceMaps: true,
-  tunnelRoute: '/monitoring',
-})
+// Wrap with Serwist (PWA service worker) - safe require
+let finalConfig = nextConfig
+try {
+  const withSerwist = require('@serwist/next').default({
+    swSrc: 'app/sw.ts',
+    swDest: 'public/sw.js',
+    disable: process.env.NODE_ENV === 'development',
+  })
+  finalConfig = withSerwist(finalConfig)
+} catch (e) {
+  console.warn('[next.config] @serwist/next not available, skipping PWA')
+}
+
+// Wrap with Sentry - safe require
+try {
+  const { withSentryConfig } = require('@sentry/nextjs')
+  finalConfig = withSentryConfig(finalConfig, {
+    silent: true,
+    hideSourceMaps: true,
+    tunnelRoute: '/monitoring',
+  })
+} catch (e) {
+  console.warn('[next.config] @sentry/nextjs not available, skipping Sentry')
+}
+
+module.exports = finalConfig
