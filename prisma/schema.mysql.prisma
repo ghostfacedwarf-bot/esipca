@@ -152,6 +152,11 @@ model Order {
 
   notes           String?     // Internal notes
 
+  // Tracking
+  trackingNumber  String?
+  courierName     String?     @db.VarChar(100)
+  statusHistory   Json?
+
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 }
@@ -199,15 +204,29 @@ model Review {
 
 // Settings
 model Settings {
-  id                  String   @id @default("default")
-  companyName         String   @default("Esipca Metalica")
-  companyAddress      String   @default("Galati, DN26 Nr 19")
-  companyPhone        String   @default("+40 (722) 292 519")
-  companyEmail        String   @default("clienti@metalfence.ro")
-  freeShippingThreshold Float  @default(350)
-  warrantyYears       Int      @default(30)
-  deliveryDays        String   @default("1-7")
-  updatedAt           DateTime @updatedAt
+  id                      String   @id @default("default")
+  companyName             String   @default("Esipca Metalica")
+  companyAddress          String   @default("Galati, DN26 Nr 19")
+  companyPhone            String   @default("+40 (722) 292 519")
+  companyEmail            String   @default("clienti@metalfence.ro")
+  companyCUI              String   @default("") @db.VarChar(50)
+  companyJ                String   @default("") @db.VarChar(50)
+  smtpHost                String   @default("")
+  smtpPort                Int      @default(465)
+  smtpUser                String   @default("")
+  smtpPass                String   @default("")
+  emailFrom               String   @default("")
+  emailFromName           String   @default("")
+  siteTitle               String   @default("Esipca Metalica")
+  siteDescription         String?  @db.Text
+  metaKeywords            String?  @db.Text
+  freeShippingThreshold   Float    @default(350)
+  warrantyYears           Int      @default(30)
+  deliveryDays            String   @default("1-7")
+  minOrderAmount          Float    @default(0)
+  shippingFee             Float    @default(0)
+  orderConfirmationMessage String? @db.Text
+  updatedAt               DateTime @updatedAt
 }
 
 // Live Chat
